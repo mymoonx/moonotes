@@ -25,6 +25,7 @@ final class PaintSettings {
     private final Path preferences, paintFile;
     private boolean enabled, chat = true, tab = true, animation = true, demo;
     private volatile PaintStyle paint;
+    private volatile String ownerTwitchId = "";
     private volatile String paintStatus = "Пейнт не загружен";
     PaintSettings(Path preferences, Path paintFile) {
         this.preferences = preferences; this.paintFile = paintFile; loadPreferences(); reload();
@@ -36,6 +37,11 @@ final class PaintSettings {
     PaintStyle paint() {
         return demo ? DEMO_PAINT : paint;
     }
+    PaintStyle paintForTwitch(String twitchId) {
+        if (demo) return DEMO_PAINT;
+        if (paint == null) return null;
+        return ownerTwitchId.isEmpty() || ownerTwitchId.equals(twitchId) ? paint : null;
+    }
     boolean demo() { return demo; }
     void toggleDemo() { demo = !demo; save(); }
     String status() { return paintStatus; }
@@ -45,17 +51,43 @@ final class PaintSettings {
     void toggleTab() { tab = !tab; save(); }
     void toggleAnimation() { animation = !animation; save(); }
 
+    void importVerified(String twitchId, com.google.gson.JsonObject source) throws IOException {
+        if (twitchId == null || !twitchId.matches("[0-9]{1,24}")) throw new IOException("Twitch ID invalid");
+        if (source == null) throw new IOException("Empty paint");
+        com.google.gson.JsonObject wrapper = new com.google.gson.JsonObject();
+        wrapper.addProperty("ownerTwitchId", twitchId);
+        wrapper.add("paint", source);
+        String json = wrapper.toString();
+        if (json.length() > 65536) throw new IOException("Paint too large");
+        try { PaintStyle.parse(json); }
+        catch (IllegalArgumentException e) { throw new IOException("Unsupported paint style", e); }
+        Files.createDirectories(paintFile.getParent());
+        Path temp = Files.createTempFile(paintFile.getParent(), "moonotes-paint-", ".tmp");
+        try {
+            Files.writeString(temp, json, StandardCharsets.UTF_8);
+            Files.move(temp, paintFile, StandardCopyOption.REPLACE_EXISTING);
+        } finally { Files.deleteIfExists(temp); }
+        demo = false;
+        save();
+        reload();
+    }
+    void note(String status) { paintStatus = status; }
     void reload() {
         try {
             if (!Files.isRegularFile(paintFile)) {
-                paint = null; paintStatus = "Нет файла config/moonotes-paint.json"; return;
+                paint = null; ownerTwitchId = ""; paintStatus = "Нет файла config/moonotes-paint.json"; return;
             }
             if (Files.size(paintFile) > 65536) throw new IOException("File too large");
-            PaintStyle loaded = PaintStyle.parse(Files.readString(paintFile, StandardCharsets.UTF_8));
+            String contents = Files.readString(paintFile, StandardCharsets.UTF_8);
+            PaintStyle loaded = PaintStyle.parse(contents);
+            com.google.gson.JsonObject raw = com.google.gson.JsonParser.parseString(contents).getAsJsonObject();
+            String owner = raw.has("ownerTwitchId") && raw.get("ownerTwitchId").isJsonPrimitive()
+                ? raw.get("ownerTwitchId").getAsString() : "";
+            ownerTwitchId = owner.matches("[0-9]{1,24}") ? owner : "";
             paint = loaded;
             paintStatus = "Загружен: " + loaded.name;
         } catch (IOException | IllegalArgumentException e) {
-            paint = null;
+            paint = null; ownerTwitchId = "";
             paintStatus = "Не удалось прочитать пейнт";
         }
     }

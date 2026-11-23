@@ -161,6 +161,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         StreamotesBridge.initialize();
         WheelKeybind.register();
         LocalReactionOverlay.register();
+        ChatReactionObserver.register();
         loadInitialManifest();
         requestCacheScan();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -185,6 +186,9 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             inWorld = false;
             MoonotesNotifications.clearTransient();
             LocalReactionOverlay.disconnect();
+            SignEmoteRenderer.reset();
+            BookEmoteRenderer.disconnect();
+            WorldImageRequests.reset();
             // Keep the last validated manifest for the next world / offline use.
         });
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);

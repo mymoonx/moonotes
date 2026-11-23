@@ -62,11 +62,25 @@ final class EmotePreviews implements AutoCloseable {
     }
 
     void draw(GuiGraphicsExtractor graphics, String id, int x, int y, int box) {
-        if (closed || id == null || id.isBlank()) return;
+        Identifier texture = texture(id);
+        if (texture != null) {
+            // Explicit source size is essential: the short overload crops when box != THUMB.
+            graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0,
+                    box, box, THUMB, THUMB, THUMB, THUMB);
+        }
+    }
+
+    /**
+     * Returns a complete square texture, never an atlas fragment. World/text renderers
+     * use the same bounded asynchronous cache as GUI previews and sample UV 0..1.
+     * Call only from the client extraction thread; null keeps the original text visible.
+     */
+    Identifier texture(String id) {
+        if (closed || id == null || id.isBlank()) return null;
         Thumbnail entry = thumbnails.get(id);
         if (entry == null) {
             FutureTask<byte[]> request = enqueue(() -> prepareThumbnail(id), false);
-            if (request == null) return;
+            if (request == null) return null;
             entry = new Thumbnail(request);
             thumbnails.put(id, entry);
             trimThumbnails();
@@ -87,11 +101,14 @@ final class EmotePreviews implements AutoCloseable {
                 entry.retryAt = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
             }
         }
-        if (entry.texture != null) {
-            // Explicit source size is essential: the short overload crops when box != THUMB.
-            graphics.blit(RenderPipelines.GUI_TEXTURED, entry.texture, x, y, 0, 0,
-                    box, box, THUMB, THUMB, THUMB, THUMB);
-        }
+        return entry.texture;
+    }
+
+    /** True only after an asynchronous cache attempt finished without an image. */
+    boolean missing(String id) {
+        if (closed) return false;
+        Thumbnail entry = thumbnails.get(id);
+        return entry != null && entry.texture == null && entry.future == null;
     }
 
     int drawDetailed(GuiGraphicsExtractor graphics, String id, int x, int y, int width) {

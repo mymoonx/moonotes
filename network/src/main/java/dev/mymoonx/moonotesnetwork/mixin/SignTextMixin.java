@@ -1,22 +1,27 @@
 package dev.mymoonx.moonotesnetwork.mixin;
 
-import dev.mymoonx.moonotesnetwork.WorldTextRendering;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.network.chat.Component;
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.mymoonx.moonotesnetwork.SignEmoteRenderer;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.AbstractSignRenderer;
+import net.minecraft.client.renderer.blockentity.state.SignRenderState;
 import net.minecraft.world.level.block.entity.SignText;
-import java.util.function.Function;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Modifies prepared sign glyphs only; never changes sign contents or packets. */
-@Mixin(value = SignText.class, remap = false)
+/** Uses the sign's existing face transform, with complete textures instead of font glyphs. */
+@Mixin(value = AbstractSignRenderer.class, remap = false)
 public abstract class SignTextMixin {
-    @Inject(method="getRenderMessages",at=@At("RETURN"),cancellable=true,require=0)
-    private void moonotes$signGlyphs(boolean filtered,
-            Function<Component, FormattedCharSequence> prepare,
-            CallbackInfoReturnable<FormattedCharSequence[]> cir) {
-        WorldTextRendering.decorateSign((SignText)(Object)this, filtered, prepare, cir);
+    @Shadow @Final private Font font;
+
+    @Inject(method = "submitSignText", at = @At("HEAD"), cancellable = true)
+    private void moonotes$signImages(SignRenderState state, PoseStack poseStack,
+            SubmitNodeCollector collector, SignText text, CallbackInfo ci) {
+        if (SignEmoteRenderer.submit(font, state, poseStack, collector, text)) ci.cancel();
     }
 }

@@ -2,23 +2,51 @@ package dev.mymoonx.moonotesnetwork;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Best-effort visual reactions from ordinary player chat. Only the already
- * displayed PLAYER chat channel is observed; the message remains unchanged.
- * A decorated/renamed server chat format may not match and is ignored.
+ * Visual reactions from displayed chat. Player packets supply the author UUID,
+ * independently of server colours, ranks and local/global chat decoration.
+ * System/plugin messages have only a strict vanilla-format fallback; arbitrary
+ * announcements are never attributed by finding a player name in their text.
  */
 public final class ChatReactionObserver {
     private static final Pattern VANILLA = Pattern.compile("^<([A-Za-z0-9_]{3,16})> (.{1,256})$");
     private static volatile long cachedRevision = -1;
     private static volatile Map<String,ChatPalette.Emote> names = Map.of();
+    private static boolean registered;
 
     private ChatReactionObserver() { }
+
+    static void register() {
+        if (registered) return;
+        registered = true;
+        ClientReceiveMessageEvents.CHAT.register((message, signed, sender, parameters, timestamp) -> {
+            if (sender == null || message == null) {
+                observeVanilla(message);
+                return;
+            }
+            String body;
+            if (signed != null) {
+                if (signed.isFullyFiltered()) return;
+                body = signed.filterMask().apply(signed.signedContent());
+            } else {
+                body = message.getString();
+                String[] vanilla = parseVanillaLine(body);
+                if (vanilla != null && sender.name().equals(vanilla[0])) body = vanilla[1];
+            }
+            observe(sender.id(), body);
+        });
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            if (!overlay) observeVanilla(message);
+        });
+    }
 
     static String[] parseVanillaLine(String text) {
         if (text == null || text.length() > 300) return null;
@@ -26,7 +54,7 @@ public final class ChatReactionObserver {
         return matched.matches() ? new String[]{matched.group(1), matched.group(2)} : null;
     }
 
-    public static void observe(Component message) {
+    private static void observeVanilla(Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || !ExtrasSettings.local().reactions()
                 || message == null) return;
@@ -39,8 +67,16 @@ public final class ChatReactionObserver {
                 break;
             }
         }
+        if (author != null) observe(author.getUUID(), parsed[1]);
+    }
+
+    private static void observe(UUID authorId, String body) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || !ExtrasSettings.local().reactions()
+                || authorId == null || body == null || body.length() > 256) return;
+        Player author = mc.level.getPlayerByUUID(authorId);
         if (author == null || author.isInvisible()) return;
-        if (author.distanceToSqr(mc.player) > 32 * 32) return;
+        // Visibility and perspective are checked from the actual camera by the renderer.
         long revision = ChatPalette.revision();
         if (revision != cachedRevision) {
             Map<String,ChatPalette.Emote> current = new HashMap<>();
@@ -51,17 +87,22 @@ public final class ChatReactionObserver {
             names = Map.copyOf(current);
             cachedRevision = revision;
         }
-        String body = parsed[1];
+        ChatPalette.Emote emote = findEmote(body, names);
+        if (emote != null) LocalReactions.showFor(authorId, emote);
+    }
+
+    static ChatPalette.Emote findEmote(String body, Map<String,ChatPalette.Emote> available) {
+        if (body == null || body.length() > 256) return null;
+        // Server convention: ! selects global chat. It is not part of an alias.
+        if (body.startsWith("!")) body = body.substring(1).stripLeading();
         int used = 0;
         for (String word : body.split("\\s+")) {
             if (++used > 32) break;
             if (word.startsWith(":") && word.endsWith(":") && word.length() > 2)
                 word = word.substring(1, word.length() - 1);
-            ChatPalette.Emote emote = names.get(word);
-            if (emote != null) {
-                LocalReactions.showFor(author.getUUID(), emote);
-                return;
-            }
+            ChatPalette.Emote emote = available.get(word);
+            if (emote != null) return emote;
         }
+        return null;
     }
 }

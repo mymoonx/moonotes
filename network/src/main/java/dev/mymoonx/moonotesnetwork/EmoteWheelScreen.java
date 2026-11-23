@@ -3,152 +3,146 @@ package dev.mymoonx.moonotesnetwork;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * True eight-sector ring. Emotes use their image previews, not cramped
- * name-on-image rectangles. Selected names appear separately and may wrap.
- */
+/** A stable eight-sector ring with a separate channel selector and slot editor. */
 final class EmoteWheelScreen extends Screen {
-    private static final int MAX = 8;
-    private static final int ICON = 38;
-    private final List<ChatPalette.Emote> choices;
+    private final WheelSettings settings = WheelSettings.local();
+    private ChatPalette.Emote[] choices = new ChatPalette.Emote[WheelSettings.SLOTS];
     private EmotePreviews previews;
     private List<WheelGeometry.Span> ring = List.of();
-    private int outer, inner, middle;
+    private WheelLayout layout;
     private String status = "";
+    private long statusUntil;
 
-    EmoteWheelScreen() {
-        super(Component.literal("Колесо эмотов Moonotes"));
-        choices = choose(ChatPalette.snapshot(), LibraryPreferences.local());
-    }
+    EmoteWheelScreen() { super(Component.literal("Колесо эмотов Moonotes")); }
 
     static List<ChatPalette.Emote> choose(List<ChatPalette.Emote> source, LibraryPreferences prefs) {
         if (source == null || source.isEmpty()) return List.of();
-        List<ChatPalette.Emote> result = new ArrayList<>(MAX);
+        List<ChatPalette.Emote> result = new ArrayList<>(WheelSettings.SLOTS);
         Set<String> seen = new HashSet<>();
         for (String mode : List.of("favorites", "recent", "all")) {
             for (ChatPalette.Emote emote : ChatPalette.find(source, "", 100,
                     prefs::favorite, prefs::lastUsed, mode)) {
                 if (seen.add(emote.key())) result.add(emote);
-                if (result.size() >= MAX) return List.copyOf(result);
+                if (result.size() >= WheelSettings.SLOTS) return List.copyOf(result);
             }
         }
         return List.copyOf(result);
     }
 
-    @Override
-    protected void init() {
+    @Override protected void init() {
         super.init();
         if (previews == null) previews = new EmotePreviews();
-        outer = Math.min(140, Math.max(65, Math.min(width, height)/2 - 28));
-        inner = Math.max(35, (int)(outer * 0.41));
-        middle = (inner + outer) / 2;
-        ring = WheelGeometry.spans(inner, outer);
+        List<ChatPalette.Emote> available = ChatPalette.snapshot();
+        settings.seed(choose(available, LibraryPreferences.local()));
+        choices = settings.resolve(available);
+        layout = WheelLayout.of(width, height);
+        ring = WheelGeometry.spans(layout.inner(), layout.outer());
+        int controlWidth = Math.min(width - 24, 280), left = (width - controlWidth) / 2;
+        int channelWidth = (controlWidth - 6) * 3 / 5;
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(left, 10, channelWidth, 22),
+            channelLabel(), "Выберите чат для ЛКМ и черновика. Глобальный чат добавляет ! перед сообщением.",
+            false, button -> {
+                settings.setChannel(settings.channel() == WheelSettings.Channel.LOCAL
+                    ? WheelSettings.Channel.GLOBAL : WheelSettings.Channel.LOCAL);
+                button.setMessage(Component.literal(channelLabel()));
+                clearFocus();
+            }));
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(left + channelWidth + 6, 10,
+            controlWidth - channelWidth - 6, 22), "Настроить", "Выбрать эмоты и порядок восьми слотов.",
+            false, button -> minecraft.gui.setScreen(new WheelEditorScreen(this))));
     }
 
-    private int hit(double x, double y) {
-        int index = WheelGeometry.slot(x - width/2.0, y - height/2.0, inner, outer);
-        return index >= 0 && index < choices.size() ? index : -1;
+    private String channelLabel() {
+        return settings.channel() == WheelSettings.Channel.LOCAL ? "Чат: локальный" : "Чат: глобальный (!)";
     }
 
-    private int iconX(int i) {
-        return width/2 + (int)Math.round(middle * Math.sin(i * Math.PI / 4)) - ICON/2;
-    }
-    private int iconY(int i) {
-        return height/2 - (int)Math.round(middle * Math.cos(i * Math.PI / 4)) - ICON/2;
-    }
-
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int cx = width / 2, cy = height / 2;
-        int hovered = hit(mouseX, mouseY);
+    @Override public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        int cx = layout.centerX(), cy = layout.centerY();
+        int hovered = layout.hit(mouseX, mouseY);
         g.fill(0, 0, width, height, 0x9A0B1222);
         for (WheelGeometry.Span span : ring) {
-            int color = span.slot() >= choices.size() ? 0x55344357
-                : span.slot() == hovered ? 0xE95A90BF : 0xD9273D57;
+            boolean active = choices[span.slot()] != null;
+            int color = !active ? 0x80344357 : span.slot() == hovered ? 0xE95A90BF : 0xD9273D57;
             if (span.edge() == 1) color = 0xFF526C8B;
-            else if (span.edge() == 2) color = span.slot()==hovered ? 0xFFFFD58C : 0xFF6587A8;
+            else if (span.edge() == 2) color = span.slot() == hovered ? 0xFFFFD58C : 0xFF6587A8;
             else if (span.edge() == 3) color = 0xFF102438;
-            g.fill(cx + span.from(), cy + span.y(), cx + span.to(), cy + span.y()+1, color);
+            g.fill(cx + span.from(), cy + span.y(), cx + span.to(), cy + span.y() + 1, color);
         }
-        for (int i = 0; i < choices.size(); i++) {
-            int x = iconX(i), y = iconY(i);
-            if (i == hovered) {
-                g.fill(x-4, y-4, x+ICON+4, y+ICON+4, 0xA66797BF);
-                g.outline(x-4, y-4, ICON+8, ICON+8, 0xFFFFD58C);
-            }
-            previews.draw(g, choices.get(i).id(), x + 3, y + 3, ICON-6);
+        for (int i = 0; i < choices.length; i++) {
+            if (choices[i] != null) previews.draw(g, choices[i].id(), layout.iconX(i), layout.iconY(i), layout.icon());
+            else g.centeredText(font, "+", layout.iconX(i) + layout.icon() / 2,
+                layout.iconY(i) + (layout.icon() - font.lineHeight) / 2, 0xFF879CB4);
         }
 
-        g.centeredText(font, "MOONOTES", cx, cy-25, 0xFFEEF6FD);
-        String action = hovered < 0 ? "Выбери эмот" : "ЛКМ: отправить";
-        g.centeredText(font, action, cx, cy+20, 0xFFA8C7E9);
-        g.centeredText(font, "ПКМ: реакция", cx, cy+31, 0xFFA8C7E9);
+        String center = layout.inner() >= 32 ? "MOONOTES" : "ЭМОТЫ";
+        g.centeredText(font, center, cx, cy - 9, 0xFFEEF6FD);
+        g.centeredText(font, hovered < 0 ? layout.inner() >= 32 ? "Выбери слот" : "8 слотов"
+            : "Слот " + (hovered + 1), cx, cy + 5, 0xFFA8C7E9);
 
-        if (choices.isEmpty())
-            g.centeredText(font, "Нет доступных эмотов", cx, cy, 0xFFFFD49D);
-        else {
-            String name = hovered >= 0 ? choices.get(hovered).name() : "8 избранных / недавних";
-            int maxWidth = Math.max(110, Math.min(width - 24, 340));
-            int y = cy + outer + 13;
-            String line = font.plainSubstrByWidth(name, maxWidth);
-            String suffix = name.length() > line.length() ? "…" : "";
-            g.fill(cx - maxWidth/2-8, y-7, cx+maxWidth/2+8, y+17, 0xD21A293D);
-            g.centeredText(font, line + suffix, cx, y, 0xFFF8F4E9);
-            g.centeredText(font, "Shift + ЛКМ — черновик", cx, y+13, 0xFFA2B9D0);
-        }
-        if (!status.isBlank()) g.centeredText(font, status, cx,
-            Math.min(height-12, cy + outer + 45), 0xFFFFC596);
+        String name = "Наведи на эмот";
+        if (hovered >= 0) name = choices[hovered] != null ? choices[hovered].name()
+            : settings.slots().get(hovered).isEmpty() ? "Пустой слот — нажми, чтобы настроить"
+            : "Эмот недоступен: включи его каталог или замени слот";
+        if (System.currentTimeMillis() < statusUntil) name = status;
+        else if (!settings.error().isBlank()) name = settings.error();
+        int panelWidth = Math.min(width - 24, 360), left = (width - panelWidth) / 2;
+        g.fill(left, layout.nameY(), left + panelWidth, layout.nameY() + 28, 0xE01A293D);
+        List<net.minecraft.util.FormattedCharSequence> lines = font.split(Component.literal(name), panelWidth - 20);
+        int visible = Math.min(2, lines.size()), y = layout.nameY() + (28 - visible * 10) / 2;
+        for (int i = 0; i < visible; i++)
+            g.text(font, lines.get(i), cx - font.width(lines.get(i)) / 2, y + i * 10, 0xFFF8F4E9, false);
+        if (mouseX >= left && mouseX < left + panelWidth && mouseY >= layout.nameY()
+            && mouseY < layout.nameY() + 28 && !name.isBlank())
+            g.setTooltipForNextFrame(font, font.split(Component.literal(name), Math.max(80, Math.min(300, width - 24))), mouseX, mouseY);
+        g.centeredText(font, "ЛКМ — отправить  ·  ПКМ — реакция", cx, height - 26, 0xFFBFD1E5);
+        g.centeredText(font, "Shift + ЛКМ — черновик  ·  Esc — закрыть", cx, height - 14, 0xFF8FA7C0);
         super.extractRenderState(g, mouseX, mouseY, delta);
     }
 
-    @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        int index = hit(event.x(), event.y());
-        if (index < 0) return super.mouseClicked(event, doubleClick);
-        ChatPalette.Emote emote = choices.get(index);
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick)) return true;
+        int index = layout.hit(event.x(), event.y());
+        if (index < 0) return false;
+        ChatPalette.Emote emote = choices[index];
+        if (emote == null && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
+            minecraft.gui.setScreen(new WheelEditorScreen(this, index));
+            return true;
+        }
+        if (emote == null) return false;
         if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             try {
-                if (event.hasShiftDown()) ChatInsertion.open(emote.name());
-                else {
-                    ChatInsertion.send(emote.name());
-                    onClose();
-                }
+                if (event.hasShiftDown()) ChatInsertion.open(emote.name(), settings.channel());
+                else { ChatInsertion.send(emote.name(), settings.channel()); onClose(); }
                 LibraryPreferences.local().used(emote.key());
             } catch (IllegalArgumentException error) {
-                status = "Не удалось отправить эмот";
+                status = error.getMessage() == null ? "Не удалось отправить эмот" : error.getMessage();
+                statusUntil = System.currentTimeMillis() + 3500;
             }
             return true;
         }
         if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
-            LocalReactions.show(emote);
-            onClose();
+            if (!ExtrasSettings.local().reactions()) {
+                status = "Реакции выключены в настройках Moonotes";
+                statusUntil = System.currentTimeMillis() + 3500;
+            } else { LocalReactions.show(emote); onClose(); }
             return true;
         }
-        return super.mouseClicked(event,doubleClick);
+        return false;
     }
 
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        if (event.isEscape()) { onClose(); return true; }
-        return super.keyPressed(event);
-    }
-
-    @Override
-    public void onClose() {
-        if (minecraft != null) minecraft.gui.setScreen(null);
-    }
-
-    @Override
-    public void removed() {
+    @Override public void onClose() { if (minecraft != null) minecraft.gui.setScreen(null); }
+    @Override protected void setInitialFocus() { clearFocus(); }
+    @Override public boolean isPauseScreen() { return false; }
+    @Override public boolean isInGameUi() { return true; }
+    @Override public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float delta) { }
+    @Override public void removed() {
         if (previews != null) { previews.close(); previews = null; }
         ring = List.of();
         super.removed();

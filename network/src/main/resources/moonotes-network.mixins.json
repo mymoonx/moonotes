@@ -12,8 +12,9 @@
     "EditBoxSelectionAccessor",
     "SignTextMixin",
     "BookTextMixin",
-    "ItemNameMixin",
-    "ChatReactionMixin"
+    "BookEditBoxMixin",
+    "BookLineViewAccessor",
+    "ItemNameMixin"
   ],
   "injectors": {
     "defaultRequire": 1

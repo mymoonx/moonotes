@@ -38,6 +38,8 @@ final class EmotePreviews implements AutoCloseable {
     private static final int DETAIL_GPU_LIMIT = 12;
     // World surfaces use thumb-sized frames to avoid growing GPU memory with sign count.
     private static final int WORLD_CACHE_LIMIT = 8;
+    private static final long WORLD_IDLE_RECYCLE_MS = 2_000;
+    private static final long WORLD_STATIC_RETRY_MS = 10_000;
     private static final int WORLD_GPU_LIMIT_PER_EMOTE = 20;
     private static final int WORLD_MAX_FRAMES = 256;
     private static final long WORLD_MAX_PREPARED = 4L * 1024 * 1024;
@@ -86,15 +88,44 @@ final class EmotePreviews implements AutoCloseable {
     Identifier animatedTexture(String id) {
         Identifier fallback = texture(id);
         if (closed || fallback == null || id == null || id.isBlank()) return fallback;
+        long now = System.currentTimeMillis();
         WorldAnimation animation = worldAnimations.get(id);
         if (animation == null) {
+            // Do not evict textures referenced by this render frame. When more
+            // than eight distinct animations are visible, extra ones display
+            // a safe static first frame until a slot has been idle 2 seconds.
+            if (worldAnimations.size() >= WORLD_CACHE_LIMIT) {
+                Iterator<WorldAnimation> candidates = worldAnimations.values().iterator();
+                boolean freed = false;
+                while (candidates.hasNext()) {
+                    WorldAnimation old = candidates.next();
+                    if (now - old.lastUsedMillis > WORLD_IDLE_RECYCLE_MS) {
+                        candidates.remove();
+                        cancel(old.future);
+                        for (Identifier texture : old.textures.values()) release(texture);
+                        old.textures.clear();
+                        freed = true;
+                        break;
+                    }
+                }
+                if (!freed) return fallback;
+            }
             FutureTask<PreparedAnimation> requested =
                 enqueue(() -> prepareWorldAnimation(id), false);
             if (requested == null) return fallback;
             animation = new WorldAnimation(requested);
             worldAnimations.put(id, animation);
-            trimWorldAnimations();
+        } else if (animation.staticOnly && animation.future == null
+                && now >= animation.retryAtMillis) {
+            // Metadata can arrive slightly after the PNG has been cached.
+            FutureTask<PreparedAnimation> requested =
+                enqueue(() -> prepareWorldAnimation(id), false);
+            if (requested != null) {
+                animation.future = requested;
+                animation.staticOnly = false;
+            }
         }
+        animation.lastUsedMillis = now;
         if (animation.future != null && animation.future.isDone()) {
             try {
                 animation.prepared = animation.future.get();
@@ -105,6 +136,7 @@ final class EmotePreviews implements AutoCloseable {
             } finally {
                 animation.future = null;
                 animation.staticOnly = animation.prepared == null;
+                animation.retryAtMillis = now + WORLD_STATIC_RETRY_MS;
             }
         }
         if (animation.prepared == null) return fallback;
@@ -431,6 +463,8 @@ final class EmotePreviews implements AutoCloseable {
         FutureTask<PreparedAnimation> future;
         PreparedAnimation prepared;
         boolean staticOnly;
+        long lastUsedMillis;
+        long retryAtMillis;
         final LinkedHashMap<Integer, Identifier> textures = new LinkedHashMap<>(16, .75f, true);
         WorldAnimation(FutureTask<PreparedAnimation> future) { this.future = future; }
     }

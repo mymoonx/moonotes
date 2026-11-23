@@ -26,6 +26,17 @@ public final class ExtrasCheck {
         saved.cycle(17);
         require(saved.reactionSeconds() == 2, "duration wraps to two seconds");
 
+        Path oldTwitch = folder.resolve("moonotes-twitch-link.json");
+        Path oldPaint = folder.resolve("moonotes-plus-paint-cache.json");
+        Path safeLibrary = folder.resolve("moonotes-library.json");
+        Files.writeString(oldTwitch, "legacy twitch id");
+        Files.writeString(oldPaint, "old cosmetics");
+        Files.writeString(safeLibrary, "do not delete");
+        require(LegacyIdentityCleanup.clean(folder) == 2, "clean obsolete files");
+        require(!Files.exists(oldTwitch) && !Files.exists(oldPaint), "legacy files removed");
+        require(Files.exists(safeLibrary), "emote library untouched");
+        require(LegacyIdentityCleanup.clean(folder) == 0, "repeat safe");
+
         String[] parsed = ChatReactionObserver.parseVanillaLine("<Steve> KEKW");
         require(parsed != null && "Steve".equals(parsed[0]) && "KEKW".equals(parsed[1]),
                 "vanilla chat reaction parser");

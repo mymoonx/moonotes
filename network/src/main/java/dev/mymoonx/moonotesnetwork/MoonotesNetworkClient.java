@@ -156,6 +156,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         readConfig();
+        LegacyIdentityCleanup.run();
         MoonotesNotifications.register();
         StreamotesBridge.initialize();
         WheelKeybind.register();

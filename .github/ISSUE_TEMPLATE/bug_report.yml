@@ -1,0 +1,47 @@
+name: Ошибка Moonotes
+description: Проблема с интерфейсом, каталогами, загрузкой или отображением эмотов.
+title: '[Bug] '
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Где возникает проблема?
+      options:
+        - Moonotes Network — библиотека, загрузки, мини-библиотека
+        - Moonotes — предпросмотр в чате
+        - Cloudflare Worker
+        - Не уверен
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Версии компонентов
+      placeholder: 'Network 0.5.3; Moonotes 0.4.1; Streamotes 1.2.16+26.3; Worker 0.5.3'
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Minecraft и система
+      placeholder: 'Minecraft 26.3; Fabric; Java 25; Windows 11'
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Что произошло и как повторить?
+      description: Укажи действия, ожидаемый результат и фактический результат. Скриншот можно прикрепить сюда.
+      placeholder: |
+        1. Открыл...
+        2. Нажал...
+        Ожидал...
+        Получилось...
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Диагностика (необязательно)
+      description: Можно вставить локальный отчёт из настроек Moonotes. Для ошибки загрузки укажи выбранный источник (Авто, 7TV или Cloudflare) и сообщение проверки. Перед публикацией лога убери личные данные и ключи доступа.
+      render: text

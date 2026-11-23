@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "moonotes",
+  "version": "${version}",
+  "name": "Moonotes",
+  "description": "Inline emote preview and safer per-world Twitch channel selection for Streamotes.",
+  "authors": [
+    "mymoon_x"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.nicetry.streamotesinput.MoonotesClient"
+    ]
+  },
+  "mixins": [
+    "moonotes.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "streamotes": ">=1.2.16 <1.2.17"
+  }
+}

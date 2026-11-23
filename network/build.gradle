@@ -1,0 +1,79 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+group = 'dev.mymoonx'
+version = '0.5.3'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    implementation 'net.fabricmc:fabric-loader:0.20.1'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.165.0+26.3'
+}
+
+base { archivesName = 'moonotes-network' }
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+// These regression checks use ordinary main() methods and require no game launch.
+// Keep them in a dedicated source set so `build` runs every check, including on
+// machines which do not have a JUnit runner installed.
+sourceSets {
+    regression {
+        java.srcDir 'src/test/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    test { java.setSrcDirs([]) }
+}
+
+def regressionTasks = fileTree('src/test/java').matching {
+    include '**/*Check.java'
+}.files.sort().collect { source ->
+    def relative = file('src/test/java').toPath().relativize(source.toPath()).toString()
+    def entrypoint = relative.replace(File.separatorChar, '.' as char).replaceAll(/\.java$/, '')
+    tasks.register('run' + source.name.replace('.java', ''), JavaExec) {
+        group = 'verification'
+        description = "Runs ${entrypoint}."
+        dependsOn tasks.named('regressionClasses')
+        classpath = sourceSets.regression.runtimeClasspath
+        mainClass = entrypoint
+        systemProperty 'java.awt.headless', 'true'
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+}
+
+tasks.register('regressionChecks') {
+    group = 'verification'
+    description = 'Runs the networking, security, input and cache regression checks.'
+    dependsOn regressionTasks
+}
+tasks.named('check') { dependsOn tasks.named('regressionChecks') }
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}

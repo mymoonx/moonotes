@@ -1,0 +1,7 @@
+name = "moonotes-emotes"
+main = "src/index.mjs"
+compatibility_date = "2026-11-01"
+
+[[r2_buckets]]
+binding = "EMOTES"
+bucket_name = "moonotes-emotes"

@@ -1,0 +1,110 @@
+name: Build and checks
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mods:
+    name: Mods / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+          cache-dependency-path: |
+            moonotes/*.gradle
+            moonotes/gradle.properties
+            moonotes/gradle/wrapper/gradle-wrapper.properties
+            network/*.gradle
+            network/gradle.properties
+            network/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build Moonotes (Linux)
+        if: runner.os != 'Windows'
+        working-directory: moonotes
+        shell: bash
+        run: bash ./gradlew --no-daemon clean build
+
+      - name: Build Moonotes Network and run regression checks (Linux)
+        if: runner.os != 'Windows'
+        working-directory: network
+        shell: bash
+        run: bash ./gradlew --no-daemon clean build
+
+      - name: Build Moonotes (Windows)
+        if: runner.os == 'Windows'
+        working-directory: moonotes
+        shell: pwsh
+        run: .\gradlew.bat --no-daemon clean build
+
+      - name: Build Moonotes Network and run regression checks (Windows)
+        if: runner.os == 'Windows'
+        working-directory: network
+        shell: pwsh
+        run: .\gradlew.bat --no-daemon clean build
+
+      - name: Upload installable mods
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: moonotes-${{ runner.os }}-${{ github.sha }}
+          path: |
+            moonotes/build/libs/*.jar
+            network/build/libs/*.jar
+            !**/*-sources.jar
+            !**/*-javadoc.jar
+            !**/*-dev.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  worker:
+    name: Worker / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run Worker tests
+        run: npm test
+
+# This workflow builds and tests only. Worker deployment and public releases
+# remain explicit owner actions; no Cloudflare token is needed by CI.

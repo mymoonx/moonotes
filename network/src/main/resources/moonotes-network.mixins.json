@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "dev.mymoonx.moonotesnetwork.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "TwitchEmotesApiMixin",
+    "StreamotesRegistryMixin",
+    "StreamotesNotificationsMixin",
+    "StreamotesLocalChannelMixin",
+    "StreamotesLocalImageMixin",
+    "ChatPickerMixin",
+    "EditBoxSelectionAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

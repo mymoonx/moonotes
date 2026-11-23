@@ -81,28 +81,34 @@ final class EmoteWheelScreen extends Screen {
                 layout.iconY(i) + (layout.icon() - font.lineHeight) / 2, 0xFF879CB4);
         }
 
-        String center = layout.inner() >= 32 ? "MOONOTES" : "ЭМОТЫ";
-        g.centeredText(font, center, cx, cy - 9, 0xFFEEF6FD);
-        g.centeredText(font, hovered < 0 ? layout.inner() >= 32 ? "Выбери слот" : "8 слотов"
-            : "Слот " + (hovered + 1), cx, cy + 5, 0xFFA8C7E9);
-
-        String name = "Наведи на эмот";
-        if (hovered >= 0) name = choices[hovered] != null ? choices[hovered].name()
-            : settings.slots().get(hovered).isEmpty() ? "Пустой слот — нажми, чтобы настроить"
-            : "Эмот недоступен: включи его каталог или замени слот";
+        // The wheel itself is the title. Use its empty center for the selected
+        // emote name instead of leaving an unreadable label over the hotbar.
+        String name = hovered >= 0
+            ? choices[hovered] != null ? choices[hovered].name()
+                : settings.slots().get(hovered).isEmpty() ? "Пустой слот" : "Эмот недоступен"
+            : "Выбери эмот";
         if (System.currentTimeMillis() < statusUntil) name = status;
         else if (!settings.error().isBlank()) name = settings.error();
-        int panelWidth = Math.min(width - 24, 360), left = (width - panelWidth) / 2;
-        g.fill(left, layout.nameY(), left + panelWidth, layout.nameY() + 28, 0xE01A293D);
-        List<net.minecraft.util.FormattedCharSequence> lines = font.split(Component.literal(name), panelWidth - 20);
-        int visible = Math.min(2, lines.size()), y = layout.nameY() + (28 - visible * 10) / 2;
-        for (int i = 0; i < visible; i++)
-            g.text(font, lines.get(i), cx - font.width(lines.get(i)) / 2, y + i * 10, 0xFFF8F4E9, false);
-        if (mouseX >= left && mouseX < left + panelWidth && mouseY >= layout.nameY()
-            && mouseY < layout.nameY() + 28 && !name.isBlank())
-            g.setTooltipForNextFrame(font, font.split(Component.literal(name), Math.max(80, Math.min(300, width - 24))), mouseX, mouseY);
-        g.centeredText(font, "ЛКМ — отправить  ·  ПКМ — реакция", cx, height - 26, 0xFFBFD1E5);
-        g.centeredText(font, "Shift + ЛКМ — черновик  ·  Esc — закрыть", cx, height - 14, 0xFF8FA7C0);
+        int centerWidth = Math.max(54, layout.inner() * 2 - 24);
+        List<net.minecraft.util.FormattedCharSequence> nameLines =
+            font.split(Component.literal(name), centerWidth);
+        int maxLines = Math.min(3, nameLines.size());
+        int firstY = cy - maxLines * 11 / 2;
+        for (int i = 0; i < maxLines; i++) {
+            var line = nameLines.get(i);
+            g.text(font, line, cx - font.width(line) / 2, firstY + i * 11,
+                0xFFF2F6FC, false);
+        }
+        // Action hints are immediately below the ring in their own translucent
+        // panel; never placed over the health bar or hotbar.
+        int panelWidth = Math.min(width - 24, 372), left = (width - panelWidth) / 2;
+        int hintY = Math.min(height - 43, cy + layout.outer() + 10);
+        g.fill(left, hintY, left + panelWidth, hintY + 35, 0xE61B2B43);
+        g.outline(left, hintY, panelWidth, 35, 0xFF6082A7);
+        g.centeredText(font, "ЛКМ — отправить   ·   ПКМ — реакция",
+            cx, hintY + 6, 0xFFF2F7FE);
+        g.centeredText(font, "Shift + ЛКМ — черновик   ·   Esc — закрыть",
+            cx, hintY + 20, 0xFFBFD4EB);
         super.extractRenderState(g, mouseX, mouseY, delta);
     }
 

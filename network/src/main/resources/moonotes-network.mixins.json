@@ -13,7 +13,8 @@
     "ReactionNameTagMixin",
     "SignTextMixin",
     "BookTextMixin",
-    "ItemNameMixin"
+    "ItemNameMixin",
+    "ChatReactionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

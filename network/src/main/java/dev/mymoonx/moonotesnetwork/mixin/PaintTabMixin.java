@@ -16,6 +16,6 @@ public abstract class PaintTabMixin {
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true, require = 0)
     private void moonotes$paintLocalName(PlayerInfo info, CallbackInfoReturnable<Component> result) {
         if (info == null || info.getProfile() == null) return;
-        result.setReturnValue(PaintRenderer.decorateTab(result.getReturnValue(), info.getProfile().getId()));
+        result.setReturnValue(PaintRenderer.decorateTab(result.getReturnValue(), info.getProfile().id()));
     }
 }

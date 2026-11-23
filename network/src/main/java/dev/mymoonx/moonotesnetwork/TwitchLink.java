@@ -80,6 +80,7 @@ final class TwitchLink {
             clientId = id;
             twitchId = twitchLogin = minecraftUuid = code = verification = "";
             connecting = false;
+            PlusPaintCache.local().clear(); // never reuse another OAuth app's cached assignment
             save();
         }
         message = linked() ? "Привязан: " + twitchLogin : "Client ID сохранён. Начните привязку.";
@@ -91,6 +92,7 @@ final class TwitchLink {
         connecting = false;
         twitchId = twitchLogin = minecraftUuid = code = verification = "";
         message = "Twitch отвязан";
+        PlusPaintCache.local().clear(); // remove cached cosmetics and Twitch ID together
         save();
     }
 

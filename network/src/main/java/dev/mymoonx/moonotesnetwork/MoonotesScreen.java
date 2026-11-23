@@ -31,8 +31,8 @@ public final class MoonotesScreen extends Screen {
     private int tab, sortMode, filterMode, keyboardPosition = -1;
     private final Screen parent;
     private int settingsSection;
-    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5}};
+    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Аккаунт"};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -218,7 +218,8 @@ public final class MoonotesScreen extends Screen {
                 case 0 -> "Подбор эмотов, мини-библиотека и сообщения о загрузке.";
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
-                default -> "Профили серверов и локальная диагностика.";
+                case 3 -> "Профили серверов и локальная диагностика.";
+                default -> "Подтверждение Twitch-аккаунта на официальном сайте. Без пароля в моде.";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
         var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);
@@ -243,6 +244,7 @@ public final class MoonotesScreen extends Screen {
                     case 12 -> MoonotesNetworkClient.cycleHudCorner();
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
+                    case 15 -> { minecraft.gui.setScreen(new TwitchLinkScreen(this)); return; }
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -271,6 +273,7 @@ public final class MoonotesScreen extends Screen {
             case 11 -> "Фоновая загрузка на экране";
             case 12 -> "Угол экрана";
             case 14 -> "Уведомления Streamotes";
+            case 15 -> "Привязка Twitch";
             default -> "Расположение HUD";
         };
     }
@@ -290,6 +293,7 @@ public final class MoonotesScreen extends Screen {
             case 11 -> onOff(MoonotesNetworkClient.hudProgressEnabled());
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
+            case 15 -> TwitchLink.local().linked()?"Подключён: "+TwitchLink.local().login():"Подключить Twitch…";
             default -> "Настроить расположение…";
         };
     }
@@ -310,6 +314,7 @@ public final class MoonotesScreen extends Screen {
             case 11 -> "Во время фоновой загрузки показывать небольшую шкалу в HUD. Скрывается автоматически и клавишей F1.";
             case 12 -> "Переставить HUD в один из четырёх углов. Точное положение можно настроить перетаскиванием.";
             case 14 -> "Автоматические сообщения Streamotes показываются по очереди с Moonotes, без наложения. Способ показа задаёт настройка «Уведомления». Если сообщения отключены в самом Streamotes, они останутся отключены. «Отдельно» возвращает обычные уведомления Streamotes.";
+            case 15 -> "Безопасный вход через Twitch Device Code. Сохраняется только Twitch ID и логин, не пароль и не токен. Локальная привязка не подтверждает Minecraft-аккаунт другим игрокам.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }

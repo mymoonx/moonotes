@@ -39,12 +39,12 @@ final class TwitchLink {
     }
     private final Path path;
     private final AtomicLong revision = new AtomicLong();
-    private volatile String clientId = "", twitchId = "", twitchLogin = "";
+    private volatile String clientId = "", twitchId = "", twitchLogin = "", minecraftUuid = "";
     private volatile String code = "", verification = "", message = "Не подключено";
     private volatile long expiresAt;
     private volatile boolean connecting;
 
-    private static final class Data { String clientId, twitchId, twitchLogin; }
+    private static final class Data { String clientId, twitchId, twitchLogin, minecraftUuid; }
     record Device(String deviceCode, String userCode, URI verification, int expires, int interval) { }
     record Identity(String id, String login) { }
     private record Reply(int status, String body) { }
@@ -54,11 +54,16 @@ final class TwitchLink {
     String clientId() { return clientId; }
     String login() { return twitchLogin; }
     String twitchId() { return twitchId; }
+    boolean linkedFor(String uuid) { return linked() && uuid != null && uuid.equals(minecraftUuid); }
     String message() { return message; }
     String code() { return System.currentTimeMillis() < expiresAt ? code : ""; }
     String verification() { return System.currentTimeMillis() < expiresAt ? verification : ""; }
     boolean connecting() { return connecting; }
     boolean linked() { return !twitchId.isEmpty(); }
+
+    static boolean validMinecraftUuid(String id) {
+        return id != null && id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}");
+    }
 
     static boolean validClientId(String id) {
         return id != null && id.matches("[a-zA-Z0-9]{10,64}");
@@ -73,7 +78,7 @@ final class TwitchLink {
         if (!id.equals(clientId)) {
             revision.incrementAndGet();
             clientId = id;
-            twitchId = twitchLogin = code = verification = "";
+            twitchId = twitchLogin = minecraftUuid = code = verification = "";
             connecting = false;
             save();
         }
@@ -84,13 +89,17 @@ final class TwitchLink {
     synchronized void unlink() {
         revision.incrementAndGet();
         connecting = false;
-        twitchId = twitchLogin = code = verification = "";
+        twitchId = twitchLogin = minecraftUuid = code = verification = "";
         message = "Twitch отвязан";
         save();
     }
 
-    synchronized void start() {
+    synchronized void start(String uuid) {
         if (connecting) return;
+        if (!validMinecraftUuid(uuid)) {
+            message = "Нужен запущенный профиль Minecraft";
+            return;
+        }
         if (!validClientId(clientId)) {
             message = "Сначала введите Client ID Twitch";
             return;
@@ -100,11 +109,11 @@ final class TwitchLink {
         connecting = true;
         code = verification = "";
         message = "Получаем код Twitch…";
-        IO.execute(() -> authorize(id, app));
+        IO.execute(() -> authorize(id, app, uuid));
     }
 
     private boolean current(long id) { return revision.get() == id; }
-    private void authorize(long attempt, String app) {
+    private void authorize(long attempt, String app, String minecraftProfile) {
         try {
             // Twitch Device Code Flow; no chat, moderation or email scopes.
             Reply first = send(DEVICE, "client_id=" + encode(app) + "&scopes=", null);
@@ -133,6 +142,7 @@ final class TwitchLink {
                         if (!current(attempt)) return;
                         twitchId = identity.id();
                         twitchLogin = identity.login();
+                        minecraftUuid = minecraftProfile;
                         code = verification = "";
                         message = "Twitch подтверждён: " + twitchLogin;
                         save(); // Token intentionally stays only in a local variable.
@@ -241,10 +251,11 @@ final class TwitchLink {
             Data saved = new com.google.gson.Gson().fromJson(Files.readString(path), Data.class);
             if (saved == null) return;
             if (validClientId(saved.clientId)) clientId = saved.clientId.toLowerCase(Locale.ROOT);
-            if (saved.twitchId != null && saved.twitchId.matches("[0-9]{1,24}")
+            if (validMinecraftUuid(saved.minecraftUuid) && saved.twitchId != null && saved.twitchId.matches("[0-9]{1,24}")
                 && saved.twitchLogin != null && saved.twitchLogin.matches("[a-zA-Z0-9_]{3,25}")) {
                 twitchId = saved.twitchId;
                 twitchLogin = saved.twitchLogin.toLowerCase(Locale.ROOT);
+                minecraftUuid = saved.minecraftUuid;
                 message = "Ранее подтверждён: " + twitchLogin;
             }
         } catch (IOException | RuntimeException e) { message = "Ошибка чтения привязки Twitch"; }
@@ -255,6 +266,7 @@ final class TwitchLink {
             Files.createDirectories(path.toAbsolutePath().getParent());
             Data stored = new Data();
             stored.clientId = clientId; stored.twitchId = twitchId; stored.twitchLogin = twitchLogin;
+            stored.minecraftUuid = minecraftUuid;
             Path temp = Files.createTempFile(path.toAbsolutePath().getParent(), "moonotes-twitch-", ".tmp");
             try {
                 Files.writeString(temp, new com.google.gson.Gson().toJson(stored), StandardCharsets.UTF_8);

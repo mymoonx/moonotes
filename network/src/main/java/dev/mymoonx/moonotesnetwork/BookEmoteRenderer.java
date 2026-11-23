@@ -41,7 +41,7 @@ public final class BookEmoteRenderer {
         for (EmoteTextTokens.Match match : matches) {
             // Server-authored links retain their appearance and hit area.
             if (line.clickable(match.start(), match.end())) continue;
-            if (previews().texture(match.id()) == null) {
+            if (previews().animatedTexture(match.id()) == null) {
                 if (previews().missing(match.id())) WorldImageRequests.request(match);
                 continue;
             }
@@ -65,7 +65,7 @@ public final class BookEmoteRenderer {
         List<EmoteTextTokens.Match> matches = editableMatches(fullText, offset, offset + part.length());
         int end = 0;
         for (EmoteTextTokens.Match match : matches) {
-            if (previews().texture(match.id()) == null) {
+            if (previews().animatedTexture(match.id()) == null) {
                 if (previews().missing(match.id())) WorldImageRequests.request(match);
                 continue;
             }
@@ -124,7 +124,7 @@ public final class BookEmoteRenderer {
     private static void drawImage(GuiGraphicsExtractor graphics, String id, int x, int y,
                                    int reservedWidth, int lineHeight) {
         int side = Math.max(1, Math.min(lineHeight, reservedWidth));
-        previews().draw(graphics, id, x + (reservedWidth - side) / 2,
+        previews().drawAnimated(graphics, id, x + (reservedWidth - side) / 2,
                 y + (lineHeight - side) / 2, side);
     }
 

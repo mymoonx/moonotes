@@ -36,6 +36,11 @@ final class EmotePreviews implements AutoCloseable {
     private static final int THUMB = 27;
     private static final int DETAIL = 128;
     private static final int DETAIL_GPU_LIMIT = 12;
+    // World surfaces use thumb-sized frames to avoid growing GPU memory with sign count.
+    private static final int WORLD_CACHE_LIMIT = 12;
+    private static final int WORLD_GPU_LIMIT_PER_EMOTE = 20;
+    private static final int WORLD_MAX_FRAMES = 96;
+    private static final long WORLD_MAX_PREPARED = 2L * 1024 * 1024;
     private static final long MAX_SOURCE_BYTES = 32L * 1024 * 1024;
     private static final long MAX_PIXELS = 16_000_000L;
     private static final long MAX_PREPARED_BYTES = 20L * 1024 * 1024;
@@ -55,6 +60,9 @@ final class EmotePreviews implements AutoCloseable {
     private PreparedAnimation modal;
     private long modalStarted;
     private final LinkedHashMap<Integer, Identifier> modalTextures = new LinkedHashMap<>(16, .75f, true);
+    // Client-thread LRU; animations are prepared by the existing bounded worker.
+    private final LinkedHashMap<String, WorldAnimation> worldAnimations =
+        new LinkedHashMap<>(16, .75f, true);
     private volatile boolean closed;
 
     EmotePreviews() {
@@ -68,6 +76,62 @@ final class EmotePreviews implements AutoCloseable {
             graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0,
                     box, box, THUMB, THUMB, THUMB, THUMB);
         }
+    }
+
+
+    /** Render an animation on signs/books without changing the regular static GUI preview.
+     * All frames use the same 27x27 dimensions and an LRU of bounded GPU textures.
+     * Falls back to frame zero while its atlas and timings are decoded asynchronously.
+     */
+    Identifier animatedTexture(String id) {
+        Identifier fallback = texture(id);
+        if (closed || fallback == null || id == null || id.isBlank()) return fallback;
+        WorldAnimation animation = worldAnimations.get(id);
+        if (animation == null) {
+            FutureTask<PreparedAnimation> requested =
+                enqueue(() -> prepareWorldAnimation(id), false);
+            if (requested == null) return fallback;
+            animation = new WorldAnimation(requested);
+            worldAnimations.put(id, animation);
+            trimWorldAnimations();
+        }
+        if (animation.future != null && animation.future.isDone()) {
+            try {
+                animation.prepared = animation.future.get();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException | CancellationException ex) {
+                // Keep frame zero for malformed or oversized animations.
+            } finally {
+                animation.future = null;
+                animation.staticOnly = animation.prepared == null;
+            }
+        }
+        if (animation.prepared == null) return fallback;
+        PreparedAnimation prepared = animation.prepared;
+        int frame = PreviewFrames.frameAt(prepared.times(), System.currentTimeMillis());
+        Identifier current = animation.textures.get(frame);
+        if (current != null) return current;
+        try {
+            current = upload("world/" + id + "/" + frame, prepared.images()[frame]);
+            animation.textures.put(frame, current);
+            while (animation.textures.size() > WORLD_GPU_LIMIT_PER_EMOTE) {
+                Iterator<Identifier> oldest = animation.textures.values().iterator();
+                Identifier unused = oldest.next();
+                oldest.remove();
+                release(unused);
+            }
+            return current;
+        } catch (IOException | RuntimeException error) {
+            // An individual corrupt frame must never break the entire world render.
+            return fallback;
+        }
+    }
+
+    void drawAnimated(GuiGraphicsExtractor graphics, String id, int x, int y, int box) {
+        Identifier image = animatedTexture(id);
+        if (image != null) graphics.blit(RenderPipelines.GUI_TEXTURED, image, x, y, 0, 0,
+            box, box, THUMB, THUMB, THUMB, THUMB);
     }
 
     /**
@@ -209,6 +273,33 @@ final class EmotePreviews implements AutoCloseable {
         }
     }
 
+
+    /**
+     * Keeps high-frame-count GIF/WebP conversions from causing excessive allocations
+     * when several signs display different animations at once.
+     */
+    private PreparedAnimation prepareWorldAnimation(String id) throws IOException {
+        Path file = CacheFiles.forId(id);
+        BufferedImage source = safeRead(file);
+        if (source == null) return null;
+        try {
+            PreviewFrames.Metadata meta = metadata(file, source);
+            int count = meta.times().length;
+            if (count < 2 || count > WORLD_MAX_FRAMES) return null;
+            byte[][] images = new byte[count][];
+            long total = 0;
+            for (int i = 0; i < count; i++) {
+                if (closed || Thread.currentThread().isInterrupted()) return null;
+                int sx = (i % meta.columns()) * meta.width();
+                int sy = (i / meta.columns()) * meta.height();
+                images[i] = encodeFrame(source, sx, sy, meta.width(), meta.height(), THUMB);
+                total += images[i].length;
+                if (total > WORLD_MAX_PREPARED) return null;
+            }
+            return new PreparedAnimation(images, meta.times());
+        } finally { source.flush(); }
+    }
+
     private static PreviewFrames.Metadata metadata(Path png, BufferedImage source) throws IOException {
         Path timing = CacheFiles.animationMetadata(png);
         List<String> lines = null;
@@ -279,6 +370,18 @@ final class EmotePreviews implements AutoCloseable {
         }
     }
 
+
+    private void trimWorldAnimations() {
+        while (worldAnimations.size() > WORLD_CACHE_LIMIT) {
+            Iterator<WorldAnimation> entries = worldAnimations.values().iterator();
+            WorldAnimation evicted = entries.next();
+            entries.remove();
+            cancel(evicted.future);
+            for (Identifier texture : evicted.textures.values()) release(texture);
+            evicted.textures.clear();
+        }
+    }
+
     private void cancel(FutureTask<?> future) {
         if (future != null) {
             future.cancel(true);
@@ -308,6 +411,11 @@ final class EmotePreviews implements AutoCloseable {
             release(thumbnail.texture);
         }
         thumbnails.clear();
+        for (WorldAnimation animation : worldAnimations.values()) {
+            cancel(animation.future);
+            for (Identifier texture : animation.textures.values()) release(texture);
+        }
+        worldAnimations.clear();
         worker.shutdownNow();
         queue.clear();
     }
@@ -317,6 +425,14 @@ final class EmotePreviews implements AutoCloseable {
         Identifier texture;
         long retryAt;
         Thumbnail(FutureTask<byte[]> future) { this.future = future; }
+    }
+
+    private static final class WorldAnimation {
+        FutureTask<PreparedAnimation> future;
+        PreparedAnimation prepared;
+        boolean staticOnly;
+        final LinkedHashMap<Integer, Identifier> textures = new LinkedHashMap<>(16, .75f, true);
+        WorldAnimation(FutureTask<PreparedAnimation> future) { this.future = future; }
     }
 
     private record PreparedAnimation(byte[][] images, int[] times) { }

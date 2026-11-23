@@ -89,7 +89,7 @@ public final class SignEmoteRenderer {
             }
             if (!uniformStyle) continue;
             if (previews == null) previews = new EmotePreviews();
-            Identifier texture = previews.texture(match.id());
+            Identifier texture = previews.animatedTexture(match.id());
             if (texture != null) replacements.add(new Replacement(match.start(), match.end(), texture));
             else if (previews.missing(match.id())) WorldImageRequests.request(match);
         }

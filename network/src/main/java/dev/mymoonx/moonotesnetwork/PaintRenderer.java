@@ -13,7 +13,7 @@ public final class PaintRenderer {
         if (name == null || mc.player == null || profileId == null || !profileId.equals(mc.player.getUUID())) return name;
         if (!TwitchLink.local().linkedFor(mc.player.getUUID().toString())) return name;
         PaintSettings settings = PaintSettings.local();
-        PaintStyle paint = settings.paint();
+        PaintStyle paint = settings.paintForTwitch(TwitchLink.local().twitchId());
         if (!settings.tab() || paint == null) return name;
         String text = name.getString();
         if (text.isEmpty() || text.length() > 128) return name;
@@ -24,7 +24,7 @@ public final class PaintRenderer {
         if (original == null || mc.player == null || !original.getSiblings().isEmpty()) return original;
         if (!TwitchLink.local().linkedFor(mc.player.getUUID().toString())) return original;
         PaintSettings settings = PaintSettings.local();
-        PaintStyle paint = settings.paint();
+        PaintStyle paint = settings.paintForTwitch(TwitchLink.local().twitchId());
         if (!settings.chat() || paint == null) return original;
         String player = mc.player.getGameProfile().name();
         String prefix = "<" + player + "> ";

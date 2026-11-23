@@ -38,7 +38,8 @@ final class TwitchLinkScreen extends Screen {
 
         linkButton = addRenderableWidget(Button.builder(Component.literal("Подключить Twitch"),
             b -> {
-                if (link.setClientId(clientIdField.getValue())) link.start();
+                if (link.setClientId(clientIdField.getValue()) && minecraft != null && minecraft.player != null)
+                    link.start(minecraft.player.getUUID().toString());
                 updateButtons();
             }).bounds(left + 12, top + 81, (panelWidth - 30) / 2, 20).build());
         unlinkButton = addRenderableWidget(Button.builder(Component.literal("Отвязать Twitch"),
@@ -88,7 +89,7 @@ final class TwitchLinkScreen extends Screen {
         String state = link.message();
         g.text(font, font.plainSubstrByWidth(state, panelWidth - 24),
             left + 12, top + 169, 0xFFB4E6C3, false);
-        g.text(font, "Только локальная привязка. Сервер её не проверяет.",
+        g.text(font, "Локальная привязка к UUID. Сервер её не проверяет.",
             left + 12, top + 185, 0xFF9DAFC4, false);
         super.extractRenderState(g, mouseX, mouseY, delta);
     }

@@ -12,7 +12,7 @@ public final class WorldTextRendering {
     private WorldTextRendering() {}
 
     public static Component decorateBook(Component value) {
-        return ExtrasSettings.local().bookText() ? WorldEmoteText.decorate(value) : value;
+        return ExtrasSettings.local().bookText() ? WorldEmoteText.decorate(value, true) : value;
     }
 
     public static Component decorateItem(Component value) {

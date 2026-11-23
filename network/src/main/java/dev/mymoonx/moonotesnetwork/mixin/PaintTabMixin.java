@@ -1,8 +1,6 @@
 package dev.mymoonx.moonotesnetwork.mixin;
 
-import dev.mymoonx.moonotesnetwork.PaintSettings;
-import dev.mymoonx.moonotesnetwork.PaintStyle;
-import dev.mymoonx.moonotesnetwork.TwitchLink;
+import dev.mymoonx.moonotesnetwork.PaintRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -17,15 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PaintTabMixin {
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true, require = 0)
     private void moonotes$paintLocalName(PlayerInfo info, CallbackInfoReturnable<Component> result) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || info == null || info.getProfile() == null
-            || !minecraft.player.getUUID().equals(info.getProfile().getId())) return;
-        if (!TwitchLink.local().linkedFor(minecraft.player.getUUID().toString())) return;
-        PaintSettings settings = PaintSettings.local();
-        PaintStyle style = settings.paint();
-        if (!settings.tab() || style == null || result.getReturnValue() == null) return;
-        String visibleName = result.getReturnValue().getString();
-        if (visibleName.isEmpty() || visibleName.length() > 128) return;
-        result.setReturnValue(style.colored(visibleName, settings.animation(), System.currentTimeMillis()));
+        if (info == null || info.getProfile() == null) return;
+        result.setReturnValue(PaintRenderer.decorateTab(result.getReturnValue(), info.getProfile().getId()));
     }
 }

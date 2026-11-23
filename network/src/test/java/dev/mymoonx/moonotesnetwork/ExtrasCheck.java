@@ -46,6 +46,20 @@ public final class ExtrasCheck {
                 "limit incoming chat text");
         require(ChatReactionObserver.parseVanillaLine("<> KEKW") == null,
                 "reject empty sender");
+
+        require(WheelGeometry.slot(0, -95, 40, 120) == 0, "top wedge");
+        require(WheelGeometry.slot(95, 0, 40, 120) == 2, "right wedge");
+        require(WheelGeometry.slot(0, 95, 40, 120) == 4, "bottom wedge");
+        require(WheelGeometry.slot(-95, 0, 40, 120) == 6, "left wedge");
+        require(WheelGeometry.slot(0, 0, 40, 120) == -1, "center not selectable");
+        require(WheelGeometry.slot(140, 0, 40, 120) == -1, "outside ring not selectable");
+        var segments = WheelGeometry.spans(40, 120);
+        require(!segments.isEmpty() && segments.size() < 4000, "bounded wheel geometry");
+        require(segments.stream().map(WheelGeometry.Span::slot).distinct().count() == 8,
+                "all eight wheel slices present");
+        require(segments.stream().allMatch(segment -> segment.to() > segment.from()),
+                "nonempty scanline spans");
+        require("KEKW ".equals(ChatInsertion.append("", "KEKW")), "standalone emote token");
         require(LocalReactions.valid("KEKW"), "valid reaction");
         require(!LocalReactions.valid("/tp"), "no commands in reaction");
         require(!LocalReactions.valid("bad name"), "no whitespace");

@@ -30,7 +30,7 @@ public final class WorldTextRendering {
         FormattedCharSequence[] updated = null;
         for (int i = 0; i < original.length; i++) {
             Component source = messages.get(i);
-            Component tagged = WorldEmoteText.decorate(source);
+            Component tagged = WorldEmoteText.decorate(source, true);
             if (tagged != source) {
                 if (updated == null) updated = original.clone();
                 updated[i] = prepare.apply(tagged);

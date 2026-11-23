@@ -23,7 +23,9 @@ public final class PaintStyleCheck {
         expectError(() -> PaintStyle.parse("""
             {"gradients":[{"function":"URL","image_url":"https://example.org/paint.webp"}]}
             """));
-        expectError(() -> PaintStyle.parse("{\\"stops\\":[]}"));
+        expectError(() -> PaintStyle.parse("""
+            {"stops":[]}
+            """));
         expectError(() -> PaintStyle.parse("x".repeat(65537)));
         Path dir=Files.createTempDirectory("moonotes-paint-test-");
         PaintSettings setting=new PaintSettings(dir.resolve("settings.json"),dir.resolve("paint.json"));

@@ -1,0 +1,53 @@
+# Generated Java / Gradle output
+**/.gradle/
+**/build/
+**/out/
+**/run/
+*.class
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Node and local Cloudflare state
+**/node_modules/
+**/.wrangler/
+**/.dev.vars
+**/.dev.vars.*
+**/.env
+**/.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+!**/.env.example
+
+# Local Minecraft state and diagnostics
+**/.minecraft/
+**/emoticons/cache/
+**/config/moonotes*.json
+**/logs/
+*.log
+*.log.gz
+hs_err_pid*
+replay_pid*
+*.hprof
+**/*-sync-report.json
+
+# IDE / operating system
+**/.idea/
+**/.vscode/
+*.iml
+*.ipr
+*.iws
+**/local.properties
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Releases should be GitHub releases, not Git history
+/release-assets/
+/dist/
+*.zip
+*.7z
+*.tar.gz

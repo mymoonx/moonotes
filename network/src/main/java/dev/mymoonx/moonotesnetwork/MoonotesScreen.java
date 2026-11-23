@@ -414,7 +414,9 @@ public final class MoonotesScreen extends Screen {
         g.fill(p.x()+1,p.y()+29,p.right()-1,p.y()+30,MoonotesTheme.LINE);
         g.fill(p.x()+1,layout.footerY-5,p.right()-1,p.bottom()-1,0xFF111B2B);
         text(g,"MOONOTES",layout.contentX,p.y()+11,TEXT);
-        String author=p.width()>=440?"mymoon_x · 0.5.3":"";
+        String currentVersion=net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("moonotes_network")
+            .map(c->c.getMetadata().getVersion().getFriendlyString()).orElse("dev");
+        String author=p.width()>=440?"mymoon_x · "+currentVersion:"";
         int authorX=layout.authorRight()-font.width(author);
         int cacheX=layout.contentX+83+(layout.wide?106:58)+8;
         int cacheWidth=Math.max(0,authorX-cacheX-8);

@@ -10,7 +10,6 @@
     "StreamotesLocalImageMixin",
     "ChatPickerMixin",
     "EditBoxSelectionAccessor",
-    "ReactionNameTagMixin",
     "SignTextMixin",
     "BookTextMixin",
     "ItemNameMixin",

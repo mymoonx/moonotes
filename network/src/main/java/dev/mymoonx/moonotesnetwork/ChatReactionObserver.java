@@ -59,7 +59,7 @@ public final class ChatReactionObserver {
                 word = word.substring(1, word.length() - 1);
             ChatPalette.Emote emote = names.get(word);
             if (emote != null) {
-                LocalReactions.showFor(author.getUUID(), emote.name());
+                LocalReactions.showFor(author.getUUID(), emote);
                 return;
             }
         }

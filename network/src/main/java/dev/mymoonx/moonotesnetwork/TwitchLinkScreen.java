@@ -15,7 +15,8 @@ import java.net.URI;
 final class TwitchLinkScreen extends Screen {
     private final Screen parent;
     private EditBox clientIdField, userCodeField;
-    private Button linkButton, unlinkButton, openButton;
+    private Button linkButton, unlinkButton, openButton, copyCodeButton;
+    private long copiedUntil;
     private int left, top, panelWidth;
     private final TwitchLink link = TwitchLink.local();
 
@@ -46,11 +47,23 @@ final class TwitchLinkScreen extends Screen {
             b -> { link.unlink(); updateButtons(); })
             .bounds(left + 18 + (panelWidth - 30) / 2, top + 81, (panelWidth - 30) / 2, 20).build());
 
-        userCodeField = new EditBox(font, left + 12, top + 138, (panelWidth - 30) / 2, 20,
+        int codeWidth = Math.max(84, (panelWidth - 30) / 2 - 18);
+        int actionWidth = Math.max(1, (panelWidth - 36 - codeWidth) / 2);
+        int actionX = left + 18 + codeWidth;
+        userCodeField = new EditBox(font, left + 12, top + 138, codeWidth, 20,
             Component.literal("Код для Twitch"));
         userCodeField.setEditable(false);
         userCodeField.setValue(link.code());
         addRenderableWidget(userCodeField);
+
+        copyCodeButton = addRenderableWidget(Button.builder(Component.literal("Копировать"),
+            b -> {
+                String activeCode = link.code();
+                if (activeCode.isBlank() || minecraft == null) return;
+                minecraft.keyboardHandler.setClipboard(activeCode);
+                copiedUntil = System.currentTimeMillis() + 2000;
+                updateButtons();
+            }).bounds(actionX, top + 138, actionWidth, 20).build());
 
         openButton = addRenderableWidget(Button.builder(Component.literal("Открыть Twitch"),
             b -> {
@@ -62,7 +75,7 @@ final class TwitchLinkScreen extends Screen {
                 } catch (Exception ignored) {
                     // User may always open twitch.tv/activate manually.
                 }
-            }).bounds(left + 18 + (panelWidth - 30) / 2, top + 138, (panelWidth - 30) / 2, 20).build());
+            }).bounds(actionX + actionWidth + 6, top + 138, actionWidth, 20).build());
 
         addRenderableWidget(Button.builder(Component.literal("Назад"),
             b -> onClose()).bounds(left + panelWidth - 90, top + 197, 78, 20).build());
@@ -73,6 +86,10 @@ final class TwitchLinkScreen extends Screen {
         if (clientIdField == null) return;
         String code = link.code();
         if (!userCodeField.getValue().equals(code)) userCodeField.setValue(code);
+        copyCodeButton.active = !code.isBlank();
+        String copyLabel = System.currentTimeMillis() < copiedUntil ? "Скопировано!" : "Копировать";
+        if (!copyCodeButton.getMessage().getString().equals(copyLabel))
+            copyCodeButton.setMessage(Component.literal(copyLabel));
         openButton.active = !link.verification().isBlank();
         linkButton.active = !link.connecting();
         unlinkButton.active = link.linked() || link.connecting();

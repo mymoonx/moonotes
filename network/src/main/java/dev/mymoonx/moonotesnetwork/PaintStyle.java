@@ -36,8 +36,9 @@ final class PaintStyle {
         if (!raw.isJsonObject()) throw new IllegalArgumentException("Expected paint object");
         JsonObject root = raw.getAsJsonObject();
         if (root.has("paint") && root.get("paint").isJsonObject()) root = root.getAsJsonObject("paint");
-        if (root.has("data") && root.get("data").isJsonObject()) root = root.getAsJsonObject("data");
         String label = field(root, "name");
+        if (root.has("data") && root.get("data").isJsonObject()) root = root.getAsJsonObject("data");
+        if (label.isEmpty()) label = field(root, "name");
         if (label.isEmpty()) label = "Импортированный пейнт";
         if (label.length() > 64) label = label.substring(0, 64);
 

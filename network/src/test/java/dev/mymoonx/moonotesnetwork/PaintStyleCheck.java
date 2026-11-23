@@ -13,6 +13,17 @@ public final class PaintStyleCheck {
                 {"at":0.5,"color":"#00FF00"},
                 {"at":1,"color":"#0000FF"}]}]}}
             """);
+        var rest = com.google.gson.JsonParser.parseString("""
+            {"user":{"style":{"paint":{"name":"7TV sample","data":{
+              "gradients":[{"function":"LINEAR_GRADIENT","stops":[
+                {"at":0,"color":"#C588FF"},{"at":1,"color":"#60D6FF"}]}]}}}}}
+            """).getAsJsonObject();
+        var external = SevenTvPaintSource.selectedPaint(rest);
+        require(external!=null, "7TV connection paint");
+        require("7TV sample".equals(PaintStyle.parse(external.toString()).name),"nested data");
+        require(SevenTvPaintSource.selectedPaint(
+            com.google.gson.JsonParser.parseString("{\"user\":{\"style\":{}}}").getAsJsonObject())==null,
+            "missing active paint");
         require(gradient.stops.size()==3,"stops");
         require((gradient.sample(0) & 0xFFFFFF)==0xFF0000,"start");
         require((gradient.sample(0.5) & 0xFFFFFF)==0x00FF00,"mid");

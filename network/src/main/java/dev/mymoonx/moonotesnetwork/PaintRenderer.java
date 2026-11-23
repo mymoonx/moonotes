@@ -26,7 +26,7 @@ public final class PaintRenderer {
         PaintSettings settings = PaintSettings.local();
         PaintStyle paint = settings.paint();
         if (!settings.chat() || paint == null) return original;
-        String player = mc.player.getGameProfile().getName();
+        String player = mc.player.getGameProfile().name();
         String prefix = "<" + player + "> ";
         String body = original.getString();
         if (!body.startsWith(prefix) || body.length() > 512) return original;

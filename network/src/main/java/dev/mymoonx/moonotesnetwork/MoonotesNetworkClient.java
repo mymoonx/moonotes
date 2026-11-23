@@ -158,6 +158,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         readConfig();
         MoonotesNotifications.register();
         StreamotesBridge.initialize();
+        WheelKeybind.register();
         loadInitialManifest();
         requestCacheScan();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {

@@ -31,8 +31,8 @@ public final class MoonotesScreen extends Screen {
     private int tab, sortMode, filterMode, keyboardPosition = -1;
     private final Screen parent;
     private int settingsSection;
-    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5}};
+    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+"};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -218,7 +218,8 @@ public final class MoonotesScreen extends Screen {
                 case 0 -> "Подбор эмотов, мини-библиотека и сообщения о загрузке.";
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
-                default -> "Профили серверов и локальная диагностика.";
+                case 3 -> "Профили серверов и локальная диагностика.";
+                default -> "Колесо реакций и эмоты в игровых текстах (только на этом клиенте).";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
         var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);
@@ -243,6 +244,7 @@ public final class MoonotesScreen extends Screen {
                     case 12 -> MoonotesNetworkClient.cycleHudCorner();
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
+                    case 15,16,17,18,19,20 -> ExtrasSettings.local().cycle(option);
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -271,6 +273,12 @@ public final class MoonotesScreen extends Screen {
             case 11 -> "Фоновая загрузка на экране";
             case 12 -> "Угол экрана";
             case 14 -> "Уведомления Streamotes";
+            case 15 -> "Колесо быстрых эмотов";
+            case 16 -> "Реакции над персонажем";
+            case 17 -> "Длительность реакции";
+            case 18 -> "Эмоты на табличках";
+            case 19 -> "Эмоты в книгах";
+            case 20 -> "Эмоты в названиях предметов";
             default -> "Расположение HUD";
         };
     }
@@ -290,6 +298,7 @@ public final class MoonotesScreen extends Screen {
             case 11 -> onOff(MoonotesNetworkClient.hudProgressEnabled());
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
+            case 15,16,17,18,19,20 -> ExtrasSettings.local().value(option);
             default -> "Настроить расположение…";
         };
     }
@@ -310,6 +319,12 @@ public final class MoonotesScreen extends Screen {
             case 11 -> "Во время фоновой загрузки показывать небольшую шкалу в HUD. Скрывается автоматически и клавишей F1.";
             case 12 -> "Переставить HUD в один из четырёх углов. Точное положение можно настроить перетаскиванием.";
             case 14 -> "Автоматические сообщения Streamotes показываются по очереди с Moonotes, без наложения. Способ показа задаёт настройка «Уведомления». Если сообщения отключены в самом Streamotes, они останутся отключены. «Отдельно» возвращает обычные уведомления Streamotes.";
+            case 15 -> "Нажмите G в игре (клавишу можно переназначить в управлении). ЛКМ — вставить в черновик чата, ПКМ — локальная реакция.";
+            case 16 -> "Показывать временный эмот над своим персонажем (например, при виде от третьего лица). Только локально, без сообщений на сервер.";
+            case 17 -> "Время показа реакции: 2, 4 или 6 секунд.";
+            case 18 -> "Показывать знакомые Streamotes-эмоты при локальном рисовании табличек. Исходный текст не изменяется.";
+            case 19 -> "Показывать знакомые эмоты на страницах книг и кафедр. Оформление только на этом клиенте.";
+            case 20 -> "Показывать известные эмоты в названиях предметов. Никакие данные предметов не изменяются.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }
@@ -380,7 +395,7 @@ public final class MoonotesScreen extends Screen {
         g.fill(p.x()+1,p.y()+29,p.right()-1,p.y()+30,MoonotesTheme.LINE);
         g.fill(p.x()+1,layout.footerY-5,p.right()-1,p.bottom()-1,0xFF111B2B);
         text(g,"MOONOTES",layout.contentX,p.y()+11,TEXT);
-        String author=p.width()>=440?"mymoon_x · 0.5.3":"";
+        String author=p.width()>=440?"mymoon_x · 0.6.0 α":"";
         int authorX=layout.authorRight()-font.width(author);
         int cacheX=layout.contentX+83+(layout.wide?106:58)+8;
         int cacheWidth=Math.max(0,authorX-cacheX-8);

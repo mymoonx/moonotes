@@ -26,6 +26,15 @@ public final class ExtrasCheck {
         saved.cycle(17);
         require(saved.reactionSeconds() == 2, "duration wraps to two seconds");
 
+        String[] parsed = ChatReactionObserver.parseVanillaLine("<Steve> KEKW");
+        require(parsed != null && "Steve".equals(parsed[0]) && "KEKW".equals(parsed[1]),
+                "vanilla chat reaction parser");
+        require(ChatReactionObserver.parseVanillaLine("[Admin] broadcast") == null,
+                "ignore server announcements");
+        require(ChatReactionObserver.parseVanillaLine("<Steve> " + "x".repeat(300)) == null,
+                "limit incoming chat text");
+        require(ChatReactionObserver.parseVanillaLine("<> KEKW") == null,
+                "reject empty sender");
         require(LocalReactions.valid("KEKW"), "valid reaction");
         require(!LocalReactions.valid("/tp"), "no commands in reaction");
         require(!LocalReactions.valid("bad name"), "no whitespace");

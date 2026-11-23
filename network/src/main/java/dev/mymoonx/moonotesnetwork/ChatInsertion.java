@@ -20,6 +20,24 @@ final class ChatInsertion {
         if(text.length()>256)throw new IllegalArgumentException("В черновике недостаточно места. Название можно скопировать.");
         return text;
     }
+    private static long lastSent;
+
+    /** Explicit left-click in the emote wheel sends exactly one emote name. */
+    static void send(String name) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.player.connection == null)
+            throw new IllegalArgumentException("No active Minecraft connection");
+        append("", name); // Reject commands, whitespace and control characters.
+        String token = StreamotesBridge.chatText(name);
+        if (token.isBlank() || token.length() > 256 || token.charAt(0) == '/'
+            || token.indexOf('\n') >= 0 || token.indexOf('\r') >= 0)
+            throw new IllegalArgumentException("Invalid chat text");
+        long now = System.currentTimeMillis();
+        if (now - lastSent < 600) throw new IllegalArgumentException("Too many emotes");
+        lastSent = now;
+        client.player.connection.sendChat(token);
+    }
+
     static void open(String name) {
         Minecraft client=Minecraft.getInstance();
         if(client.player==null)throw new IllegalArgumentException("Сначала войдите в мир.");

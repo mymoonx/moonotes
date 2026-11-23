@@ -1,7 +1,6 @@
 package dev.mymoonx.moonotesnetwork;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -14,14 +13,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Eight-slot client-side radial picker. No server interaction: left-click
- * opens an unsent chat draft, right-click shows a local temporary reaction.
+ * True eight-sector ring. Emotes use their image previews, not cramped
+ * name-on-image rectangles. Selected names appear separately and may wrap.
  */
 final class EmoteWheelScreen extends Screen {
     private static final int MAX = 8;
-    private static final int BOX = 42;
+    private static final int ICON = 38;
     private final List<ChatPalette.Emote> choices;
     private EmotePreviews previews;
+    private List<WheelGeometry.Span> ring = List.of();
+    private int outer, inner, middle;
     private String status = "";
 
     EmoteWheelScreen() {
@@ -47,69 +48,92 @@ final class EmoteWheelScreen extends Screen {
     protected void init() {
         super.init();
         if (previews == null) previews = new EmotePreviews();
+        outer = Math.min(140, Math.max(65, Math.min(width, height)/2 - 28));
+        inner = Math.max(35, (int)(outer * 0.41));
+        middle = (inner + outer) / 2;
+        ring = WheelGeometry.spans(inner, outer);
     }
 
-    private int radius() { return Math.max(58, Math.min(104, Math.min(width, height) / 3)); }
-    private int centerX() { return width / 2; }
-    private int centerY() { return height / 2; }
-    private int slotX(int i) {
-        return centerX() + (int) Math.round(radius() * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / MAX)) - BOX / 2;
+    private int hit(double x, double y) {
+        int index = WheelGeometry.slot(x - width/2.0, y - height/2.0, inner, outer);
+        return index >= 0 && index < choices.size() ? index : -1;
     }
-    private int slotY(int i) {
-        return centerY() + (int) Math.round(radius() * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / MAX)) - BOX / 2;
+
+    private int iconX(int i) {
+        return width/2 + (int)Math.round(middle * Math.sin(i * Math.PI / 4)) - ICON/2;
     }
-    private int hovered(double x, double y) {
-        for (int i = 0; i < choices.size(); i++) {
-            if (x >= slotX(i) && x < slotX(i) + BOX
-                    && y >= slotY(i) && y < slotY(i) + BOX) return i;
-        }
-        return -1;
+    private int iconY(int i) {
+        return height/2 - (int)Math.round(middle * Math.cos(i * Math.PI / 4)) - ICON/2;
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int cx = centerX(), cy = centerY();
-        g.fill(0, 0, width, height, 0xA0121827);
-        g.fill(cx - 84, cy - 18, cx + 84, cy + 20, 0xD31C2B40);
-        g.outline(cx - 84, cy - 18, 168, 38, 0xFF6480A5);
-        g.centeredText(font, "MOONOTES", cx, cy - 12, 0xFFE7F0FD);
-        g.centeredText(font, "ЛКМ: чат  •  ПКМ: реакция", cx, cy + 2, 0xFFADBFD6);
-        for (int i = 0; i < choices.size(); i++) {
-            var emote = choices.get(i);
-            int x = slotX(i), y = slotY(i);
-            boolean selected = hovered(mouseX, mouseY) == i;
-            g.fill(x, y, x + BOX, y + BOX, selected ? 0xF047678C : 0xE0223349);
-            g.outline(x, y, BOX, BOX, selected ? 0xFFFFD58C : 0xFF5D7796);
-            previews.draw(g, emote.id(), x + 7, y + 4, 28);
-            String name = font.plainSubstrByWidth(emote.name(), BOX - 4);
-            g.text(font, name, x + (BOX - font.width(name)) / 2, y + 33, 0xFFFFFFFF, false);
+        int cx = width / 2, cy = height / 2;
+        int hovered = hit(mouseX, mouseY);
+        g.fill(0, 0, width, height, 0x9A0B1222);
+        for (WheelGeometry.Span span : ring) {
+            int color = span.slot() >= choices.size() ? 0x55344357
+                : span.slot() == hovered ? 0xE95A90BF : 0xD9273D57;
+            if (span.edge() == 1) color = 0xFF526C8B;
+            else if (span.edge() == 2) color = span.slot()==hovered ? 0xFFFFD58C : 0xFF6587A8;
+            else if (span.edge() == 3) color = 0xFF102438;
+            g.fill(cx + span.from(), cy + span.y(), cx + span.to(), cy + span.y()+1, color);
         }
+        for (int i = 0; i < choices.size(); i++) {
+            int x = iconX(i), y = iconY(i);
+            if (i == hovered) {
+                g.fill(x-4, y-4, x+ICON+4, y+ICON+4, 0xA66797BF);
+                g.outline(x-4, y-4, ICON+8, ICON+8, 0xFFFFD58C);
+            }
+            previews.draw(g, choices.get(i).id(), x + 3, y + 3, ICON-6);
+        }
+
+        g.centeredText(font, "MOONOTES", cx, cy-25, 0xFFEEF6FD);
+        String action = hovered < 0 ? "Выбери эмот" : "ЛКМ: отправить";
+        g.centeredText(font, action, cx, cy+20, 0xFFA8C7E9);
+        g.centeredText(font, "ПКМ: реакция", cx, cy+31, 0xFFA8C7E9);
+
         if (choices.isEmpty())
-            g.centeredText(font, "Добавь каталог или эмоты в избранное", cx, cy + 30, 0xFFFFCE9E);
-        if (!status.isBlank())
-            g.centeredText(font, status, cx, Math.min(height - 16, cy + radius() + 33), 0xFFFFCE9E);
+            g.centeredText(font, "Нет доступных эмотов", cx, cy, 0xFFFFD49D);
+        else {
+            String name = hovered >= 0 ? choices.get(hovered).name() : "8 избранных / недавних";
+            int maxWidth = Math.max(110, Math.min(width - 24, 340));
+            int y = cy + outer + 13;
+            String line = font.plainSubstrByWidth(name, maxWidth);
+            String suffix = name.length() > line.length() ? "…" : "";
+            g.fill(cx - maxWidth/2-8, y-7, cx+maxWidth/2+8, y+17, 0xD21A293D);
+            g.centeredText(font, line + suffix, cx, y, 0xFFF8F4E9);
+            g.centeredText(font, "Shift + ЛКМ — черновик", cx, y+13, 0xFFA2B9D0);
+        }
+        if (!status.isBlank()) g.centeredText(font, status, cx,
+            Math.min(height-12, cy + outer + 45), 0xFFFFC596);
         super.extractRenderState(g, mouseX, mouseY, delta);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        int index = hovered(event.x(), event.y());
-        if (index >= 0 && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
-            ChatPalette.Emote emote = choices.get(index);
+        int index = hit(event.x(), event.y());
+        if (index < 0) return super.mouseClicked(event, doubleClick);
+        ChatPalette.Emote emote = choices.get(index);
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             try {
-                ChatInsertion.open(emote.name());
+                if (event.hasShiftDown()) ChatInsertion.open(emote.name());
+                else {
+                    ChatInsertion.send(emote.name());
+                    onClose();
+                }
                 LibraryPreferences.local().used(emote.key());
             } catch (IllegalArgumentException error) {
-                status = "Не удалось вставить эмот в чат";
+                status = "Не удалось отправить эмот";
             }
             return true;
         }
-        if (index >= 0 && event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
-            LocalReactions.show(choices.get(index));
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
+            LocalReactions.show(emote);
             onClose();
             return true;
         }
-        return super.mouseClicked(event, doubleClick);
+        return super.mouseClicked(event,doubleClick);
     }
 
     @Override
@@ -126,6 +150,7 @@ final class EmoteWheelScreen extends Screen {
     @Override
     public void removed() {
         if (previews != null) { previews.close(); previews = null; }
+        ring = List.of();
         super.removed();
     }
 }

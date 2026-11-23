@@ -5,6 +5,8 @@ import java.io.IOException;
 /** Offline input validation: does not contact Twitch or use real credentials. */
 public final class TwitchLinkCheck {
     public static void main(String[] args) throws Exception {
+            require(TwitchLink.validMinecraftUuid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), "profile UUID");
+        require(!TwitchLink.validMinecraftUuid("not-a-minecraft-id"), "reject invalid UUID");
         require(TwitchLink.validClientId("abcdefghijklmnopqrst12345"), "client ID valid");
         require(!TwitchLink.validClientId("secret /token"), "reject spaces and punctuation");
         require(!TwitchLink.validClientId("short"), "reject short ID");

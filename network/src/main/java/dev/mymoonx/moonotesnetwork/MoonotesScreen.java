@@ -32,7 +32,7 @@ public final class MoonotesScreen extends Screen {
     private final Screen parent;
     private int settingsSection;
     private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Аккаунт", "Пейнты"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15},{16,17,18,19,20,21,22}};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15},{16,17,18,19,20,21}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -252,7 +252,6 @@ public final class MoonotesScreen extends Screen {
                     case 19 -> PaintSettings.local().toggleAnimation();
                     case 20 -> PaintSettings.local().toggleDemo();
                     case 21 -> PaintSettings.local().reload();
-                    case 22 -> SevenTvPaintSource.loadMyPaint();
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -288,7 +287,6 @@ public final class MoonotesScreen extends Screen {
             case 19 -> "Анимация градиента";
             case 20 -> "Тестовый пейнт Moonotes";
             case 21 -> "Загрузить данные пейнта";
-            case 22 -> "Пейнт 7TV по Twitch ID";
             default -> "Расположение HUD";
         };
     }
@@ -315,7 +313,6 @@ public final class MoonotesScreen extends Screen {
             case 19 -> onOff(PaintSettings.local().animation());
             case 20 -> PaintSettings.local().demo()?"Демо активно":"Демо выключено";
             case 21 -> "Обновить JSON…";
-            case 22 -> SevenTvPaintSource.busy()?"Загружается…":"Загрузить с 7TV";
             default -> "Настроить расположение…";
         };
     }
@@ -343,7 +340,6 @@ public final class MoonotesScreen extends Screen {
             case 19 -> "Анимация градиента в TAB. В чате цвета фиксируются при получении сообщения.";
             case 20 -> "Демонстрационный градиент для проверки качества. Это НЕ пейнт вашего Twitch-аккаунта.";
             case 21 -> "Повторно прочитать config/moonotes-paint.json. Допустимы безопасные цвета и градиенты; изображения и пейнты PLUS ещё не подключены.";
-            case 22 -> "По запросу игрока получить активный 7TV-пейнт через публичный API для привязанного Twitch ID. PLUS-пейнты Chatterino+ не загружаются.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }
@@ -616,7 +612,7 @@ public final class MoonotesScreen extends Screen {
                 g.text(font,paint.colored(name,PaintSettings.local().animation(),System.currentTimeMillis()),
                     heading.x(),heading.y()+16,0xFFFFFFFF,false);
              }else {
-                String msg = SevenTvPaintSource.status().isBlank() ? PaintSettings.local().status() : SevenTvPaintSource.status();
+                String msg = PaintSettings.local().status();
                 fit(g,msg,heading.x(),heading.y()+16,heading.width(),MUTED);
             }
         }else fit(g,"Сохраняется автоматически",heading.x(),heading.y()+16,heading.width(),MUTED);

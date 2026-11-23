@@ -33,8 +33,10 @@ final class TwitchLink {
         thread.setDaemon(true);
         return thread;
     });
-    private static final TwitchLink LOCAL = new TwitchLink(
-        FabricLoader.getInstance().getConfigDir().resolve("moonotes-twitch-link.json"));
+    private static final class Holder {
+        static final TwitchLink LOCAL = new TwitchLink(
+            FabricLoader.getInstance().getConfigDir().resolve("moonotes-twitch-link.json"));
+    }
     private final Path path;
     private final AtomicLong revision = new AtomicLong();
     private volatile String clientId = "", twitchId = "", twitchLogin = "";
@@ -47,7 +49,7 @@ final class TwitchLink {
     record Identity(String id, String login) { }
     private record Reply(int status, String body) { }
 
-    static TwitchLink local() { return LOCAL; }
+    static TwitchLink local() { return Holder.LOCAL; }
     private TwitchLink(Path path) { this.path = path; load(); }
     String clientId() { return clientId; }
     String login() { return twitchLogin; }

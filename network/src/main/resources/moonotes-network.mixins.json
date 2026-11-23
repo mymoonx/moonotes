@@ -9,7 +9,9 @@
     "StreamotesLocalChannelMixin",
     "StreamotesLocalImageMixin",
     "ChatPickerMixin",
-    "EditBoxSelectionAccessor"
+    "EditBoxSelectionAccessor",
+    "PaintTabMixin",
+    "PaintChatMixin"
   ],
   "injectors": {
     "defaultRequire": 1

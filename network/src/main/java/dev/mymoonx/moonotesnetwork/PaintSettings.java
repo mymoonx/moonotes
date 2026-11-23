@@ -39,6 +39,10 @@ final class PaintSettings {
     }
     PaintStyle paintForTwitch(String twitchId) {
         if (demo) return DEMO_PAINT;
+        // Prefer an approved PLUS assignment if it is cached for THIS verified
+        // Twitch ID. There is no Chatterino+ network adapter in this build.
+        PaintStyle plus = PlusPaintCache.local().get(twitchId, System.currentTimeMillis());
+        if (plus != null) return plus;
         if (paint == null) return null;
         return ownerTwitchId.isEmpty() || ownerTwitchId.equals(twitchId) ? paint : null;
     }

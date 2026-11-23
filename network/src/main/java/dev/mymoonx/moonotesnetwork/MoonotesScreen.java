@@ -31,8 +31,8 @@ public final class MoonotesScreen extends Screen {
     private int tab, sortMode, filterMode, keyboardPosition = -1;
     private final Screen parent;
     private int settingsSection;
-    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Аккаунт"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15}};
+    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Аккаунт", "Пейнты"};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15},{16,17,18,19,20,21}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -219,7 +219,8 @@ public final class MoonotesScreen extends Screen {
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
                 case 3 -> "Профили серверов и локальная диагностика.";
-                default -> "Подтверждение Twitch-аккаунта на официальном сайте. Без пароля в моде.";
+                case 4 -> "Подтверждение Twitch-аккаунта на официальном сайте. Без пароля в моде.";
+                default -> "Клиентское отображение пейнтов, источники и тестовый предпросмотр.";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
         var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);
@@ -245,6 +246,12 @@ public final class MoonotesScreen extends Screen {
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
                     case 15 -> { minecraft.gui.setScreen(new TwitchLinkScreen(this)); return; }
+                    case 16 -> PaintSettings.local().toggleEnabled();
+                    case 17 -> PaintSettings.local().toggleChat();
+                    case 18 -> PaintSettings.local().toggleTab();
+                    case 19 -> PaintSettings.local().toggleAnimation();
+                    case 20 -> PaintSettings.local().toggleDemo();
+                    case 21 -> PaintSettings.local().reload();
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -274,6 +281,12 @@ public final class MoonotesScreen extends Screen {
             case 12 -> "Угол экрана";
             case 14 -> "Уведомления Streamotes";
             case 15 -> "Привязка Twitch";
+            case 16 -> "Показывать пейнты";
+            case 17 -> "Пейнты в чате";
+            case 18 -> "Пейнты в списке игроков";
+            case 19 -> "Анимация градиента";
+            case 20 -> "Тестовый пейнт Moonotes";
+            case 21 -> "Загрузить данные пейнта";
             default -> "Расположение HUD";
         };
     }
@@ -294,6 +307,12 @@ public final class MoonotesScreen extends Screen {
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
             case 15 -> TwitchLink.local().linked()?"Подключён: "+TwitchLink.local().login():"Подключить Twitch…";
+            case 16 -> onOff(PaintSettings.local().enabled());
+            case 17 -> onOff(PaintSettings.local().chat());
+            case 18 -> onOff(PaintSettings.local().tab());
+            case 19 -> onOff(PaintSettings.local().animation());
+            case 20 -> PaintSettings.local().demo()?"Демо активно":"Демо выключено";
+            case 21 -> "Обновить JSON…";
             default -> "Настроить расположение…";
         };
     }
@@ -315,6 +334,12 @@ public final class MoonotesScreen extends Screen {
             case 12 -> "Переставить HUD в один из четырёх углов. Точное положение можно настроить перетаскиванием.";
             case 14 -> "Автоматические сообщения Streamotes показываются по очереди с Moonotes, без наложения. Способ показа задаёт настройка «Уведомления». Если сообщения отключены в самом Streamotes, они останутся отключены. «Отдельно» возвращает обычные уведомления Streamotes.";
             case 15 -> "Безопасный вход через Twitch Device Code. Сохраняется только Twitch ID и логин, не пароль и не токен. Локальная привязка не подтверждает Minecraft-аккаунт другим игрокам.";
+            case 16 -> "Включать оформление только после явного согласия. Без установленного пейнта ничего не меняется.";
+            case 17 -> "Только простой формат собственного имени в локальных сообщениях. Сложные сообщения и чужие ники не изменяются.";
+            case 18 -> "Оформляет только собственное имя в TAB, если Twitch привязан к текущему Minecraft UUID.";
+            case 19 -> "Анимация градиента в TAB. В чате цвета фиксируются при получении сообщения.";
+            case 20 -> "Демонстрационный градиент для проверки качества. Это НЕ пейнт вашего Twitch-аккаунта.";
+            case 21 -> "Повторно прочитать config/moonotes-paint.json. Допустимы безопасные цвета и градиенты; изображения и пейнты PLUS ещё не подключены.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }
@@ -578,7 +603,14 @@ public final class MoonotesScreen extends Screen {
         fit(g,"РАЗДЕЛЫ",side.x()+8,side.y()+4,side.width()-16,MUTED);
         var heading=layout.settingsHeading();
         fit(g,SETTING_SECTIONS[settingsSection],heading.x(),heading.y(),heading.width(),TEXT);
-        fit(g,"Сохраняется автоматически",heading.x(),heading.y()+16,heading.width(),MUTED);
+        if(settingsSection==5){
+            PaintStyle paint=PaintSettings.local().paint();
+            if(paint!=null){
+                String name=TwitchLink.local().login().isBlank()?"Пример пейнта":TwitchLink.local().login();
+                g.text(font,paint.colored(name,PaintSettings.local().animation(),System.currentTimeMillis()),
+                    heading.x(),heading.y()+16,0xFFFFFFFF,false);
+            }else fit(g,PaintSettings.local().status(),heading.x(),heading.y()+16,heading.width(),MUTED);
+        }else fit(g,"Сохраняется автоматически",heading.x(),heading.y()+16,heading.width(),MUTED);
         configureSettings();var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);int[] options=SETTING_OPTIONS[settingsSection];boolean hover=false;
         for(int row=0;row<settingRows;row++)for(int col=0;col<settingColumns;col++){
             int index=(settingsScroll.row+row)*settingColumns+col;if(index>=options.length)continue;

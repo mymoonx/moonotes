@@ -37,10 +37,10 @@ final class EmotePreviews implements AutoCloseable {
     private static final int DETAIL = 128;
     private static final int DETAIL_GPU_LIMIT = 12;
     // World surfaces use thumb-sized frames to avoid growing GPU memory with sign count.
-    private static final int WORLD_CACHE_LIMIT = 12;
+    private static final int WORLD_CACHE_LIMIT = 8;
     private static final int WORLD_GPU_LIMIT_PER_EMOTE = 20;
-    private static final int WORLD_MAX_FRAMES = 96;
-    private static final long WORLD_MAX_PREPARED = 2L * 1024 * 1024;
+    private static final int WORLD_MAX_FRAMES = 256;
+    private static final long WORLD_MAX_PREPARED = 4L * 1024 * 1024;
     private static final long MAX_SOURCE_BYTES = 32L * 1024 * 1024;
     private static final long MAX_PIXELS = 16_000_000L;
     private static final long MAX_PREPARED_BYTES = 20L * 1024 * 1024;

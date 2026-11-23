@@ -60,6 +60,23 @@ public final class ExtrasCheck {
         require(segments.stream().allMatch(segment -> segment.to() > segment.from()),
                 "nonempty scanline spans");
         require("KEKW ".equals(ChatInsertion.append("", "KEKW")), "standalone emote token");
+        var grid = new WheelGridGeometry(100, 120, 640, 420, 3, 50, 6, 91);
+        require(grid.cardWidth() >= 180, "three columns fill available width");
+        require(grid.gridRows() == 31 && grid.maxRow() == 25, "scroll rows, not items");
+        require(grid.itemAt(grid.cardX(0) + 5, grid.cardY(0) + 5, 0) == 0,
+                "first grid cell hit");
+        require(grid.itemAt(grid.cardX(1) + 5, grid.cardY(0) + 5, 0) == 1,
+                "second column hit");
+        require(grid.itemAt(grid.cardX(2) + 5, grid.cardY(1) + 5, 2) == 11,
+                "row scroll keeps column position");
+        require(grid.itemAt(grid.trackX(), grid.top() + 30, 0) == -1,
+                "scroll rail is not an emote cell");
+        require(grid.rowForThumb(grid.top() + grid.thumbHeight() / 2.0,
+                grid.thumbHeight() / 2.0) == 0, "drag thumb to top");
+        require(grid.rowForThumb(grid.bottom() - grid.thumbHeight() / 2.0,
+                grid.thumbHeight() / 2.0) == grid.maxRow(), "drag thumb to bottom");
+        require(grid.rowForThumb(-999, 0) == 0 &&
+                grid.rowForThumb(9999, 0) == grid.maxRow(), "drag is clamped");
         require(LocalReactions.valid("KEKW"), "valid reaction");
         require(!LocalReactions.valid("/tp"), "no commands in reaction");
         require(!LocalReactions.valid("bad name"), "no whitespace");

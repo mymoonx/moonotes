@@ -15,6 +15,8 @@ final class PaintSettings {
     private static final class Stored {
         Boolean enabled, chat, tab, animation, demo;
     }
+    private static final PaintStyle DEMO_PAINT = PaintStyle.parse(
+        "{\"name\":\"Демо Moonotes\",\"stops\":[{\"at\":0,\"color\":\"#54C2FE\"},{\"at\":0.48,\"color\":\"#C689FF\"},{\"at\":1,\"color\":\"#FFD17A\"}]}");
     private static final class Holder { static final PaintSettings INSTANCE = new PaintSettings(
         FabricLoader.getInstance().getConfigDir().resolve("moonotes-paint-settings.json"),
         FabricLoader.getInstance().getConfigDir().resolve("moonotes-paint.json")); }
@@ -32,8 +34,7 @@ final class PaintSettings {
     boolean tab() { return enabled && tab; }
     boolean animation() { return animation; }
     PaintStyle paint() {
-        if (!demo) return paint;
-        return PaintStyle.parse("{\"name\":\"Демо Moonotes\",\"stops\":[{\"at\":0,\"color\":\"#54C2FE\"},{\"at\":0.48,\"color\":\"#C689FF\"},{\"at\":1,\"color\":\"#FFD17A\"}]}");
+        return demo ? DEMO_PAINT : paint;
     }
     boolean demo() { return demo; }
     void toggleDemo() { demo = !demo; save(); }

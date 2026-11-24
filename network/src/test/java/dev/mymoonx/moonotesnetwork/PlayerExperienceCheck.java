@@ -17,6 +17,21 @@ public final class PlayerExperienceCheck {
         require(pages.pageCount()==1 && pages.slots().getFirst().equals(ID+":42"),
             "legacy wheel slots migrate");
         require(pages.channel()==WheelSettings.Channel.GLOBAL,"legacy chat mode migrates");
+        LibraryPreferences groupPreferences=new LibraryPreferences(dir.resolve("group-library.json"));
+        require(groupPreferences.createGroup("Коты").isEmpty(),"group created");
+        var emotes=new java.util.ArrayList<ChatPalette.Emote>();
+        for(int i=0;i<12;i++){
+            String key=ID+":Cat"+i;
+            emotes.add(new ChatPalette.Emote(key,ID,"Cat"+i,"Test"));
+            groupPreferences.toggleGroup("Коты",key);
+        }
+        var first=WheelSettings.groupKeys("Коты",0,emotes,groupPreferences);
+        var second=WheelSettings.groupKeys("Коты",8,emotes,groupPreferences);
+        require(first.getFirst().equals(ID+":Cat0") &&
+                first.get(7).equals(ID+":Cat7"),"first group page");
+        require(second.getFirst().equals(ID+":Cat8") &&
+                second.get(3).equals(ID+":Cat11") &&
+                second.get(4).isEmpty(),"second group page");
         require(pages.addPage("Коты"),"user page created");
         require(pages.pageCount()==2 && pages.page()==1,"new page selected");
         require(pages.renamePage("Котики"),"page can be renamed");

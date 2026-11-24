@@ -27,10 +27,12 @@ final class WheelKeybind {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (manager.consumeClick()) {
                 if(client.player!=null&&client.gui.screen()==null)
-                    client.gui.setScreen(new MoonotesScreen());
+                    {client.gui.setScreen(new MoonotesScreen());
+                     MoonotesTelemetry.count(MoonotesTelemetry.Event.MANAGER_OPEN);}
             }
             while (picker.consumeClick()) {
                 if(client.player!=null&&client.gui.screen()==null){
+                    MoonotesTelemetry.count(MoonotesTelemetry.Event.PICKER_OPEN);
                     ChatPickerShortcut.request();
                     client.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("",false));
                 }
@@ -39,6 +41,7 @@ final class WheelKeybind {
                 if (client.player != null && client.gui.screen() == null
                     && ExtrasSettings.local().wheel()) {
                     client.gui.setScreen(new EmoteWheelScreen());
+                    MoonotesTelemetry.count(MoonotesTelemetry.Event.WHEEL_OPEN);
                 }
             }
         });

@@ -37,6 +37,7 @@ final class ChatInsertion {
         if (now - lastSent < 600) throw new IllegalArgumentException("Подождите перед следующей отправкой");
         lastSent = now;
         client.player.connection.sendChat(message);
+        MoonotesTelemetry.count(MoonotesTelemetry.Event.CHAT_SEND);
     }
 
     static String forChannel(String token, WheelSettings.Channel channel) {

@@ -25,6 +25,7 @@ final class LocalReactions {
         Minecraft mc = Minecraft.getInstance();
         if (emote == null || mc.player == null || !ExtrasSettings.local().reactions()) return;
         showFor(mc.player.getUUID(), emote);
+        MoonotesTelemetry.count(MoonotesTelemetry.Event.LOCAL_REACTION);
         LibraryPreferences.local().used(emote.key());
     }
 

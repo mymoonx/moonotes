@@ -25,6 +25,7 @@ final class MoonotesHealthCheck {
         report.append("Настройки поддержки: ").append(SupportPreferences.local().status().isBlank() ? "OK" : "ошибка").append('\n');
         report.append("Профиль качества: ").append(SupportPreferences.local().performance().name()).append('\n');
         report.append("Категория последней ошибки: ").append(DiagnosticsReport.errorKind("none")).append('\n');
+        report.append("\n").append(MoonotesTelemetry.summary());
         report.append("\nОтчёт локальный. Не содержит имён, IP, адресов серверов, текста чата или токенов.\n");
         return report.toString();
     }

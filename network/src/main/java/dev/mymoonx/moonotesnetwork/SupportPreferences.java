@@ -38,7 +38,7 @@ final class SupportPreferences {
     synchronized Performance performance(){return performance;}
     synchronized String status(){return status;}
 
-    synchronized void toggleTelemetry(){telemetryOptIn=!telemetryOptIn;write();}
+    synchronized void toggleTelemetry(){telemetryOptIn=!telemetryOptIn;if(!telemetryOptIn)MoonotesTelemetry.clear();write();}
     synchronized void toggleManualReports(){allowManualReports=!allowManualReports;write();}
     synchronized void toggleUpdateNotifications(){updateNotifications=!updateNotifications;write();}
     synchronized void cyclePerformance(){

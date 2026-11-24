@@ -70,10 +70,9 @@ public final class MoonotesUpdateInstaller {
         Files.createDirectories(updates);
         Path backup=updates.resolve("previous-"+java.util.UUID.randomUUID()+".bak");
         move(current,backup);
-        boolean installed=false;
+        boolean committed=false;
         try{
             move(staged,target);
-            installed=true;
             Properties p=new Properties();
             p.setProperty("oldName",current.getFileName().toString());
             p.setProperty("newName",target.getFileName().toString());
@@ -84,9 +83,16 @@ public final class MoonotesUpdateInstaller {
             Path tmp=Files.createTempFile(updates,"moonotes-update-",".tmp");
             try(OutputStream out=Files.newOutputStream(tmp)){p.store(out,"Moonotes update rollback record");}
             Files.move(tmp,record,StandardCopyOption.REPLACE_EXISTING);
+            committed=true;
         }finally{
-            if(!installed && Files.isRegularFile(backup,LinkOption.NOFOLLOW_LINKS))
-                move(backup,current); // Restore prior working JAR on failed move.
+            if(!committed){
+                // Updating both the JAR and the rollback metadata is one operation.
+                // If either fails, put the previous working version back into mods.
+                if(Files.isRegularFile(target,LinkOption.NOFOLLOW_LINKS))
+                    try{move(target,staged);}catch(IOException ignored){}
+                if(Files.isRegularFile(backup,LinkOption.NOFOLLOW_LINKS))
+                    move(backup,current);
+            }
         }
     }
     private static void rollback(Path current,Path staged,Path target,Path updates)throws Exception{

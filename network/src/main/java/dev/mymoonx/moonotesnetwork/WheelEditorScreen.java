@@ -24,7 +24,7 @@ final class WheelEditorScreen extends Screen {
     private final Map<String, ChatPalette.Emote> indexed = new HashMap<>();
     private final MoonotesButton[] slots = new MoonotesButton[WheelSettings.SLOTS];
     private EmotePreviews previews;
-    private EditBox search;
+    private EditBox search, pageName;
     private String query = "", status = "";
     private int selected, row, candidate = -1;
     private int left, contentWidth, slotWidth, slotsX, slotsY, detailsY, listTop, listBottom, visibleRows, columns;
@@ -60,9 +60,22 @@ final class WheelEditorScreen extends Screen {
         }
         button(left, detailsY, 22, 20, "←", "Поменять выбранный слот с предыдущим.", false, b -> move(-1));
         button(left + 26, detailsY, 22, 20, "→", "Поменять выбранный слот со следующим.", false, b -> move(1));
+        pageName = addRenderableWidget(new MoonotesEditBox(font, left+57, detailsY,
+            Math.max(45,contentWidth-230),20, Component.literal("Название страницы")));
+        pageName.setMaxLength(24);
+        pageName.setValue(settings.pageTitle());
+        button(left+contentWidth-166,detailsY,86,20,"Имя страницы",
+            "Сохранить название текущей страницы.",false,b -> {
+                if(settings.renamePage(pageName.getValue()))status="Название страницы сохранено";
+                else status=settings.error();
+                clearFocus();
+            });
         button(left + contentWidth - 74, detailsY, 74, 20, "Очистить",
             "Оставить выбранный слот пустым.", false,
-            b -> { draft = WheelSettings.assign(draft, selected, ""); status = ""; clearFocus(); });
+            b -> {
+                if(!settings.pageGroup().isEmpty()){status="Сначала отвяжи страницу от группы";return;}
+                draft=WheelSettings.assign(draft,selected,"");status="";clearFocus();
+            });
         search = addRenderableWidget(new MoonotesEditBox(font, left, detailsY + 26, contentWidth, 22,
             Component.literal("Поиск эмота для колеса")));
         search.setHint(Component.literal("Поиск по названию…"));
@@ -70,9 +83,37 @@ final class WheelEditorScreen extends Screen {
         search.setValue(query);
         search.setResponder(value -> { query = value; row = 0; candidate = -1; filter(); });
         listTop = detailsY + 54;
-        listBottom = Math.max(listTop + ROW_HEIGHT, height - 42);
+        listBottom = Math.max(listTop + ROW_HEIGHT, height - 73);
         visibleRows = Math.max(1, (listBottom - listTop) / ROW_HEIGHT);
         listBottom = listTop + visibleRows * ROW_HEIGHT;
+        int pageButtonWidth=(contentWidth-25)/6;
+        int pageY=height-57;
+        button(left,pageY,pageButtonWidth,22,"◀ Стр.",
+            "Предыдущая страница; сначала сохрани изменения в слотах.",false,b -> pageAction(-1));
+        button(left+(pageButtonWidth+5),pageY,pageButtonWidth,22,"Стр. ▶",
+            "Следующая страница; сначала сохрани изменения в слотах.",false,b -> pageAction(1));
+        button(left+2*(pageButtonWidth+5),pageY,pageButtonWidth,22,"+ Страница",
+            "Создать пустую страницу. Изменение сохраняется сразу.",false,b -> {
+                if(!pageReady())return;
+                if(settings.addPage("Страница "+(settings.pageCount()+1)))refreshPage();
+                else status=settings.error();
+            });
+        button(left+3*(pageButtonWidth+5),pageY,pageButtonWidth,22,"Удалить",
+            "Удалить эту страницу. Изменение сохраняется сразу.",false,b -> {
+                if(!pageReady())return;
+                if(settings.removePage())refreshPage();else status=settings.error();
+            });
+        button(left+4*(pageButtonWidth+5),pageY,pageButtonWidth,22,"Группа →",
+            "Связать страницу со следующей группой мини-библиотеки. Состав обновляется сам.",false,b -> {
+                if(!pageReady())return;
+                if(settings.linkNextGroup())refreshPage();else status=settings.error();
+            });
+        button(left+5*(pageButtonWidth+5),pageY,
+            Math.max(26,contentWidth-5*(pageButtonWidth+5)),22,"Отвязать",
+            "Сделать страницу независимой, сохранив восемь текущих эмотов.",false,b -> {
+                if(!pageReady())return;
+                if(settings.unlinkGroup())refreshPage();else status=settings.error();
+            });
         int actionWidth = (contentWidth - 12) / 3;
         button(left, height - 29, actionWidth, 22, "Сброс",
             "Заполнить слоты избранными и недавними эмотами. Сохранение — отдельно.", false,
@@ -118,6 +159,26 @@ final class WheelEditorScreen extends Screen {
         lastHovered = -1;
     }
 
+    private boolean pageReady(){
+        if(!settings.pageGroup().isEmpty())return true;
+        if(!draft.equals(settings.slots())){
+            status="Сначала сохрани изменения восьми слотов";
+            return false;
+        }
+        return true;
+    }
+    private void pageAction(int delta){
+        if(!pageReady())return;
+        settings.stepPage(delta);
+        refreshPage();
+    }
+    private void refreshPage(){
+        draft=settings.slots();selected=0;candidate=-1;
+        if(pageName!=null)pageName.setValue(settings.pageTitle());
+        status="Страница "+(settings.page()+1)+" из "+settings.pageCount();
+        clearFocus();
+    }
+
     private void move(int direction) {
         int next = Math.floorMod(selected + direction, WheelSettings.SLOTS);
         var reordered = new ArrayList<>(draft);
@@ -130,6 +191,7 @@ final class WheelEditorScreen extends Screen {
 
     private void assign(int index) {
         if (index < 0 || index >= results.size()) return;
+        if(!settings.pageGroup().isEmpty()){status="Связанная страница заполняется из мини-библиотеки";return;}
         draft = WheelSettings.assign(draft, selected, results.get(index).key());
         status = "";
         candidate = index;
@@ -156,8 +218,12 @@ final class WheelEditorScreen extends Screen {
     @Override public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
         if (revision != ChatPalette.revision()) refreshSource();
         g.fill(0, 0, width, height, 0xF0111C2C);
-        g.centeredText(font, getTitle(), width / 2, 8, 0xFFF0F5FC);
-        String hint = status.isBlank() ? "Выбери слот, затем эмот из сетки" : status;
+        g.centeredText(font, Component.literal("Настройка колеса · "+(settings.page()+1)+"/"+
+            settings.pageCount()), width / 2, 8, 0xFFF0F5FC);
+        String hint = status.isBlank()
+            ? (settings.pageGroup().isEmpty() ? "Выбери слот и эмот из сетки" :
+                "Связь с группой: "+settings.pageGroup()+" — меняй состав в мини-библиотеке")
+            : status;
         g.centeredText(font, fit(hint, contentWidth), width / 2, 23,
             status.isBlank() ? 0xFFA6BDD5 : 0xFFFFC596);
         g.text(font, Component.literal(fit("Слот " + (selected + 1) + ": " +

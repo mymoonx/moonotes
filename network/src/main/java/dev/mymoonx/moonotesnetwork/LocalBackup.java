@@ -31,7 +31,7 @@ final class LocalBackup {
         Files.createDirectories(directory);
         Path zip=directory.resolve("moonotes-"+NAME.format(Instant.now())+".zip");
         if(Files.exists(zip,LinkOption.NOFOLLOW_LINKS))
-            zip=Files.createTempFile(directory,"moonotes-backup-",".zip");
+            zip=directory.resolve("moonotes-backup-"+java.util.UUID.randomUUID()+".zip");
         int sum=0;
         try(ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(zip,
                 StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE),StandardCharsets.UTF_8)){

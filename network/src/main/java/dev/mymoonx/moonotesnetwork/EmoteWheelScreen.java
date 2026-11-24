@@ -45,8 +45,8 @@ final class EmoteWheelScreen extends Screen {
         layout = WheelLayout.of(width, height);
         ring = WheelGeometry.spans(layout.inner(), layout.outer());
         // Keep the actual ring uncluttered: page name/count lives inside its center.
-        int controlWidth=Math.min(width-24,290), x=(width-controlWidth)/2;
-        int channelWidth=Math.max(80,controlWidth-100);
+        int controlWidth=Math.min(width-24,260), x=(width-controlWidth)/2;
+        int channelWidth=controlWidth-82;
         addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,10,channelWidth,22),
             channelLabel(),"ЛКМ — отправить в выбранный чат; префикс задаётся в настройках Moonotes.",
             false,b -> {
@@ -55,7 +55,7 @@ final class EmoteWheelScreen extends Screen {
                 b.setMessage(Component.literal(channelLabel()));clearFocus();
             }));
         addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+channelWidth+6,10,
-            controlWidth-channelWidth-6,22),"⚙ Настроить",
+            controlWidth-channelWidth-6,22),"Настроить",
             "Восемь слотов, список страниц и привязка групп.",false,
             b -> minecraft.gui.setScreen(new WheelEditorScreen(this))));
     }
@@ -93,12 +93,15 @@ final class EmoteWheelScreen extends Screen {
 
         // The wheel itself is the title. Use its empty center for the selected
         // emote name instead of leaving an unreadable label over the hotbar.
-        String name = hovered >= 0
+        String hoveredName = hovered >= 0
             ? choices[hovered] != null ? choices[hovered].name()
                 : settings.slots().get(hovered).isEmpty() ? "Пустой слот" : "Эмот недоступен"
-            : settings.pageTitle();
-        if (System.currentTimeMillis() < statusUntil) name = status;
-        else if (!settings.error().isBlank()) name = settings.error();
+            : null;
+        String feedback = System.currentTimeMillis() < statusUntil ? status
+            : !settings.error().isBlank() ? settings.error() : null;
+        WheelCenterLabels labels = WheelCenterLabels.of(
+            settings.pageTitle(), settings.page() + 1, settings.pageCount(), hoveredName, feedback);
+        String name = labels.title();
         int centerWidth = Math.max(54, layout.inner() * 2 - 24);
         List<net.minecraft.util.FormattedCharSequence> nameLines =
             font.split(Component.literal(name), centerWidth);
@@ -109,12 +112,11 @@ final class EmoteWheelScreen extends Screen {
             g.text(font, line, cx - font.width(line) / 2, firstY + i * 11,
                 0xFFF2F6FC, false);
         }
-        // Compact page indicator is integrated with the ring, hidden for one page.
-        if(settings.pageCount()>1){
-            String indicator=settings.pageTitle()+"  ·  "+(settings.page()+1)+"/"+settings.pageCount();
-            g.centeredText(font,Component.literal(font.plainSubstrByWidth(
-                indicator,Math.max(54,layout.inner()*2-18))),cx,
-                cy+Math.max(13,layout.inner()/2),0xFFA5C5E4);
+        // No duplicate page title: idle shows only 1/2, hovered emotes show "Page · 1/2".
+        if (!labels.subtitle().isBlank()) {
+            g.centeredText(font, Component.literal(font.plainSubstrByWidth(
+                labels.subtitle(), Math.max(54, layout.inner() * 2 - 18))), cx,
+                cy + Math.max(13, layout.inner() / 2), 0xFFA5C5E4);
         }
         // Action hints are immediately below the ring in their own translucent
         // panel; never placed over the health bar or hotbar.

@@ -23,6 +23,7 @@ final class WheelSettings {
     static final class Page {
         String title="Основные",group="";
         List<String> slots=emptySlots();
+        int groupOffset;
         Page(){}
         Page(String t,String g,List<String> s){title=t;group=g;slots=normalized(s);}
     }
@@ -112,12 +113,17 @@ final class WheelSettings {
         if(group==null||!LibraryPreferences.local().groupNames().contains(group)){
             error="Сначала создай группу в мини-библиотеке";return false;
         }
-        pages.get(page).group=group;pages.get(page).title=cleanName(group,group);
+        Page current=pages.get(page);
+        current.group=group;current.title=cleanName(group,group);
+        // Each additional page linked to the same group shows its next 8 emotes.
+        int earlier=0;
+        for(int i=0;i<page;i++)if(group.equals(pages.get(i).group))earlier++;
+        current.groupOffset=earlier*SLOTS;
         return save();
     }
     synchronized boolean unlinkGroup(){
         if(pages.get(page).group.isBlank())return true;
-        pages.get(page).slots=slots();pages.get(page).group="";
+        pages.get(page).slots=slots();pages.get(page).group="";pages.get(page).groupOffset=0;
         return save();
     }
     synchronized boolean linkNextGroup(){
@@ -134,12 +140,19 @@ final class WheelSettings {
     synchronized List<String> slots(){
         Page current=pages.get(page);
         if(current.group.isBlank())return current.slots;
+        return groupKeys(current.group,current.groupOffset,ChatPalette.snapshot(),LibraryPreferences.local());
+    }
+
+    /** Stable, bounded group pagination from the same membership source as mini-library. */
+    static List<String> groupKeys(String group,int offset,List<ChatPalette.Emote> source,LibraryPreferences prefs){
         var out=new ArrayList<>(emptySlots());
-        int i=0;
-        for(ChatPalette.Emote emote:ChatPalette.snapshot()){
-            if(LibraryPreferences.local().inGroup(current.group,emote.key())){
-                if(i>=SLOTS)break;
-                out.set(i++,emote.key());
+        if(group==null||group.isBlank()||source==null||prefs==null)return List.copyOf(out);
+        int seen=0,added=0;
+        for(ChatPalette.Emote emote:source){
+            if(prefs.inGroup(group,emote.key())){
+                if(seen++<offset)continue;
+                if(added>=SLOTS)break;
+                out.set(added++,emote.key());
             }
         }
         return List.copyOf(out);
@@ -205,7 +218,9 @@ final class WheelSettings {
                     if(p==null)continue;
                     String title=cleanName(p.title,"Страница");
                     String group=p.group==null||p.group.length()>24?"":p.group;
-                    restored.add(new Page(title,group,p.slots));
+                    Page added=new Page(title,group,p.slots);
+                    added.groupOffset=Math.clamp(p.groupOffset,0,MAX_PAGES*SLOTS);
+                    restored.add(added);
                 }
                 if(!restored.isEmpty()){pages.clear();pages.addAll(restored);configured=true;}
             }else if(data.slots!=null){

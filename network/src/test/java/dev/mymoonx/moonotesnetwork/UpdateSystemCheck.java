@@ -46,11 +46,17 @@ public final class UpdateSystemCheck {
             SupportPreferences.UpdateChannel.BETA)==null,
             "unsigned or older updates are not offered");
         String hash="a".repeat(64);
-        String lines=hash+"  moonotes-network-0.6.0-beta.4.jar\n"+
+        String lines=hash+"  network/build/libs/moonotes-network-0.6.0-beta.4.jar\n"+
             "b".repeat(64)+"  other.jar\n";
         check(MoonotesUpdateCheck.expectedHash(lines.getBytes(java.nio.charset.StandardCharsets.UTF_8),
             "moonotes-network-0.6.0-beta.4.jar").equals(hash),
             "only exact JAR checksum accepted");
+        String wrong="c".repeat(64)+"  something/moonotes-network-0.6.0-beta.4.jar\n";
+        try{
+            MoonotesUpdateCheck.expectedHash(wrong.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                "moonotes-network-0.6.0-beta.4.jar");
+            throw new AssertionError("Untrusted checksum filename accepted");
+        }catch(java.io.IOException expected){}
         try{
             MoonotesUpdateCheck.expectedHash(lines.getBytes(java.nio.charset.StandardCharsets.UTF_8),
                 "moonotes-network-0.6.0-beta.5.jar");

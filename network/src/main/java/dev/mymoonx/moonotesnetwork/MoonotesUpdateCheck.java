@@ -182,7 +182,9 @@ final class MoonotesUpdateCheck {
             String[] pieces=line.strip().split("\\s+",2);
             if(pieces.length!=2)continue;
             String file=pieces[1].startsWith("*")?pieces[1].substring(1):pieces[1];
-            if(file.equals(jar)&&pieces[0].matches("[a-fA-F0-9]{64}"))
+            // GitHub Actions releases may store the original build path in SHA256SUMS.
+            if((file.equals(jar)||file.equals("network/build/libs/"+jar))
+                &&pieces[0].matches("[a-fA-F0-9]{64}"))
                 return pieces[0].toLowerCase(Locale.ROOT);
         }
         throw new IOException("JAR checksum missing");

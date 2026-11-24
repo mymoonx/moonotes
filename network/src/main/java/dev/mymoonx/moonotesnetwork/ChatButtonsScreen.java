@@ -2,7 +2,6 @@ package dev.mymoonx.moonotesnetwork;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -12,9 +11,8 @@ final class ChatButtonsScreen extends Screen {
     private final Screen parent;
     private final ChatButtonPlacement placement=ChatButtonPlacement.local();
     private ChatButtonPlacement.Data draft;
-    private EditBox prefix;
     private int dragging=-1;
-    private double dx,dy;
+    private double dx,dy,lastX,lastY;
     private String status="Перетащи кнопки. Позиции привязаны к краям экрана.";
 
     ChatButtonsScreen(Screen parent){
@@ -26,10 +24,14 @@ final class ChatButtonsScreen extends Screen {
         super.init();
         int panelWidth=Math.min(330,Math.max(150,width-20));
         int x=(width-panelWidth)/2;
-        prefix=addRenderableWidget(new MoonotesEditBox(font,x,52,panelWidth,22,
-            Component.literal("Префикс глобального чата")));
-        prefix.setMaxLength(4);
-        prefix.setValue(WheelSettings.local().prefix());
+        addRenderableWidget(new MoonotesButton(
+            new MoonotesLayout.Rect(x,54,panelWidth,22),
+            "Перемещать вместе: "+(draft.together?"Включено":"Выключено"),
+            "Связать обе кнопки для перетаскивания одной группой.",false,b->{
+                draft.together=!draft.together;
+                b.setMessage(Component.literal("Перемещать вместе: "+
+                    (draft.together?"Включено":"Выключено")));
+            }));
         int buttonWidth=Math.max(30,(panelWidth-12)/3);
         addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,height-28,buttonWidth,22),
             "Сброс","Вернуть кнопки в стандартное место (не сохраняется до подтверждения).",
@@ -37,15 +39,11 @@ final class ChatButtonsScreen extends Screen {
         addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+buttonWidth+6,height-28,buttonWidth,22),
             "Отмена","Закрыть без сохранения.",false,b -> onClose()));
         addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+(buttonWidth+6)*2,height-28,panelWidth-(buttonWidth+6)*2,22),
-            "Сохранить","Сохранить обе позиции и глобальный префикс для текущего сервера.",
+            "Сохранить","Сохранить позиции кнопок для открытого чата.",
             true,b -> save()));
     }
 
     private void save(){
-        if(!WheelSettings.validPrefix(prefix.getValue())){
-            status="Префикс: от 1 до 4 символов ! # @ $ % & * + . ~ -";
-            return;
-        }
         var p=ChatButtonPlacement.rect(draft,ChatButtonPlacement.PICKER,width,height);
         var m=ChatButtonPlacement.rect(draft,ChatButtonPlacement.MANAGER,width,height);
         if(p.x()<m.x()+m.width() && m.x()<p.x()+p.width()
@@ -54,9 +52,6 @@ final class ChatButtonsScreen extends Screen {
             return;
         }
         if(!placement.save(draft)){status="Не удалось сохранить расположение";return;}
-        if(!WheelSettings.local().setPrefix(prefix.getValue())){
-            status=WheelSettings.local().error();return;
-        }
         if(minecraft!=null)minecraft.gui.setScreen(parent);
     }
 
@@ -75,10 +70,15 @@ final class ChatButtonsScreen extends Screen {
         g.centeredText(font,"Положение кнопок в открытом чате",width/2,10,0xFFF0F5FD);
         g.centeredText(font,"Перетаскивание · Привязка к краям GUI · Esc — отмена",
             width/2,29,0xFFBACEE3);
-        int x=(width-Math.min(330,Math.max(150,width-20)))/2;
-        g.text(font,"Символ глобального чата на этом сервере:",x,41,0xFFA6BED8,false);
+        g.centeredText(font,"Положение сохраняется отдельно от настроек чата.",
+            width/2,40,0xFFA6BED8);
         g.fill(8,height-72,width-8,height-42,0xA51A293D);
         g.text(font,"Поле чата — пример расположения",18,height-60,0xFFABBCCF,false);
+        if(dragging>=0){
+            int guideY=height-40;
+            g.fill(8,guideY,width-8,guideY+1,0x885C8FBF);
+            g.fill(width/2,76,width/2+1,height-42,0x55608CAF);
+        }
         drawButton(g,ChatButtonPlacement.rect(draft,ChatButtonPlacement.PICKER,width,height),
             "Эмоты",mx,my,dragging==ChatButtonPlacement.PICKER);
         drawButton(g,ChatButtonPlacement.rect(draft,ChatButtonPlacement.MANAGER,width,height),
@@ -96,6 +96,7 @@ final class ChatButtonsScreen extends Screen {
             if(box.contains(event.x(),event.y())){
                 dragging=which;
                 dx=event.x()-box.x();dy=event.y()-box.y();
+                lastX=event.x();lastY=event.y();
                 clearFocus();return true;
             }
         }
@@ -103,7 +104,14 @@ final class ChatButtonsScreen extends Screen {
     }
     @Override public boolean mouseDragged(MouseButtonEvent event,double x,double y){
         if(dragging>=0){
-            ChatButtonPlacement.place(draft,dragging,width,height,event.x()-dx,event.y()-dy);
+            if(draft.together){
+                double mx=event.x()-lastX,my=event.y()-lastY;
+                for(int which=0;which<2;which++){
+                    var rect=ChatButtonPlacement.rect(draft,which,width,height);
+                    ChatButtonPlacement.place(draft,which,width,height,rect.x()+mx,rect.y()+my);
+                }
+            }else ChatButtonPlacement.place(draft,dragging,width,height,event.x()-dx,event.y()-dy);
+            lastX=event.x();lastY=event.y();
             return true;
         }
         return super.mouseDragged(event,x,y);

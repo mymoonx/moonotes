@@ -32,7 +32,7 @@ public final class MoonotesScreen extends Screen {
     private final Screen parent;
     private int settingsSection;
     private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -248,6 +248,7 @@ public final class MoonotesScreen extends Screen {
                     case 15,16,17,18,19,20 -> ExtrasSettings.local().cycle(option);
                     case 21 -> {minecraft.gui.setScreen(new ChatButtonsScreen(this));return;}
                     case 22 -> {minecraft.gui.setScreen(new MoonotesSupportScreen(this));return;}
+                    case 23 -> {minecraft.gui.setScreen(new ChatRoutingScreen(this));return;}
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -256,7 +257,7 @@ public final class MoonotesScreen extends Screen {
         }
         reportButton=button(layout.footer(0,4),"Отчёт","Локальная диагностика: версии, счётчики и категории ошибок. Отправки данных нет.",false,b->openReport());
         button(layout.footer(1,4),"Кеш","Проверка изображений и анимации, восстановление отсутствующих файлов.",false,b->{cacheOpen=true;rebuildMoonotesWidgets();});
-        button(layout.footer(2,4),"Что нового","Изменения версии 0.5.3. Доступны без интернета.",false,b->openReleaseNotes());
+        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0-beta.4. Доступны без интернета.",false,b->openReleaseNotes());
         button(layout.footer(3,4),"События","Недавние сообщения Moonotes, в том числе при выключенных уведомлениях.",false,b->openEventLog());
     }
 
@@ -282,7 +283,8 @@ public final class MoonotesScreen extends Screen {
             case 18 -> "Эмоты на табличках";
             case 19 -> "Эмоты в книгах";
             case 20 -> "Эмоты в названиях предметов";
-            case 21 -> "Кнопки и префикс чата";
+            case 21 -> "Расположение кнопок чата";
+            case 23 -> "Глобальный чат";
             case 22 -> "Диагностика и поддержка";
             default -> "Расположение HUD";
         };
@@ -304,7 +306,8 @@ public final class MoonotesScreen extends Screen {
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
             case 15,16,17,18,19,20 -> ExtrasSettings.local().value(option);
-            case 21 -> "Настроить кнопки и чат…";
+            case 21 -> "Расположить кнопки…";
+            case 23 -> "Настроить префикс…";
             case 22 -> "Открыть центр поддержки…";
             default -> "Настроить расположение…";
         };
@@ -332,7 +335,8 @@ public final class MoonotesScreen extends Screen {
             case 18 -> "Эмоты активных каталогов рисуются отдельными изображениями на обычных и подвесных табличках. До загрузки картинки видно имя. Исходный текст сохраняется.";
             case 19 -> "Эмоты активных каталогов в готовых книгах, на кафедрах и в редакторе. Изображение занимает место имени; курсор, ссылки и сохранение текста работают как обычно.";
             case 20 -> "Показывать известные эмоты в названиях предметов. Никакие данные предметов не изменяются.";
-            case 21 -> "Перетащить кнопки в открытом чате, выбрать префикс глобального чата для сервера. Горячие клавиши меняются в Настройки Minecraft → Управление → Moonotes.";
+            case 21 -> "Перетащить кнопки в открытом чате, объединить их для совместного движения. Горячие клавиши меняются в Настройки Minecraft → Управление → Moonotes.";
+            case 23 -> "Локальный/глобальный чат; символ глобального сообщения (например, !, #, @) сохраняется отдельно для каждого сервера. Командные префиксы /g не поддерживаются.";
             case 22 -> "Самопроверка, безопасный отчёт, резервное копирование, режим качества и ручная проверка новых версий. Никакой автоматической отправки логов.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
@@ -661,9 +665,23 @@ public final class MoonotesScreen extends Screen {
         releaseNotesOpen=true;eventsOpen=false;
         reportOpen=true;reportScroll.row=0;reportScroll.release();
         report=String.join("\n",
-            "Moonotes Network 0.5.3 — загрузка каталогов и управление",
+            "Moonotes Network 0.6.0-beta.4 — удобный интерфейс и безопасные обновления",
             "",
-            "ЗАГРУЗКА",
+            "ИНТЕРФЕЙС",
+            "• Страницы колеса показаны внутри кольца. Редактор использует выбор страницы и меню дополнительных действий.",
+            "• Мини-библиотека компактна, при одном элементе не занимает лишнюю высоту; отступы, крестик и скроллбар выровнены.",
+            "• Диагностика, качество, данные и обновления распределены по отдельным разделам.",
+            "• Редактор кнопок чата с совместным перемещением; префикс глобального чата перенесён в отдельные настройки.",
+            "",
+            "ОБНОВЛЕНИЯ",
+            "• Stable / Beta и режимы уведомления, скачивания и установки при выходе.",
+            "• Для загрузки обязателен SHA-256 релиза и проверка fabric.mod.json. Старый JAR сохраняется для отката.",
+            "• JAR никогда не меняется во время работы Minecraft; установка выполняется отдельным процессом после завершения игры.",
+            "",
+            "СОХРАННОСТЬ",
+            "• Настройки, группы, прежние страницы и кеш не удаляются. Отправка телеметрии автоматически не выполняется.",
+            "",
+            "РАНЕЕ В 0.5.3",
             "• Исправлены адреса изображений новых каталогов: 7TV получает канонический идентификатор, общий кеш сохраняет прежние имена файлов.",
             "• Для загрузки через Cloudflare нужен Worker 0.5.3. Готовые изображения повторно скачивать не нужно.",
             "",

@@ -52,7 +52,19 @@ public final class ChatEmotePicker {
     public int searchWidth(){return geometry().input().width();}
     public void searchChanged(String value){search=value==null?"":value;scroll=0;rowHighlight=-1;paletteStamp="";}
     public void groupNameChanged(String value){groupNameInput=value==null?"":value;}
-    private ChatOverlayGeometry.Layout geometry(){return ChatOverlayGeometry.forScreen(width,height,form());}
+    ChatOverlayGeometry.Layout geometry(){
+        // Keep the input field steady while typing: shrink short group lists,
+        // but don't resize a popup on every live-search keystroke.
+        int count=-1;
+        if(!form() && (view==View.GROUPS||view==View.MEMBERSHIP))
+            count=preferences.groupNames().size();
+        else if(!form() && mode==3 && view==View.EMOTES)
+            count=preferences.groupSize(group);
+        return ChatOverlayGeometry.forScreen(width,height,form(),count);
+    }
+    private ChatOverlayGeometry.Rect listRow(int i){
+        return geometry().row(i,maxScroll()>0);
+    }
     private ChatOverlayGeometry.Rect pickerButton(){return ChatOverlayGeometry.pickerButton(width,height);}
     private ChatOverlayGeometry.Rect managerButton(){return ChatOverlayGeometry.managerButton(width,height);}
     private EmotePreviews previews(){if(previews==null)previews=new EmotePreviews();return previews;}
@@ -103,7 +115,11 @@ public final class ChatEmotePicker {
     private void clampScroll(){scroll=Math.max(0,Math.min(scroll,maxScroll()));}
     private ChatOverlayGeometry.Rect tab(int index){return geometry().tab(index);}
     private ChatOverlayGeometry.Rect footer(int index,int count){return geometry().footer(index,count);}
-    private ChatOverlayGeometry.Rect track(){var g=geometry();return new ChatOverlayGeometry.Rect(g.x()+g.width()-12,g.y()+g.bodyTop(),7,g.rows()*ChatOverlayGeometry.ROW-2);}
+    private ChatOverlayGeometry.Rect track(){
+        var g=geometry();
+        return new ChatOverlayGeometry.Rect(g.x()+g.width()-11,
+            g.y()+g.bodyTop(),4,Math.max(1,g.rows()*ChatOverlayGeometry.ROW-2));
+    }
     private ChatOverlayGeometry.Rect thumb(){
         var t=track();int n=rowCount();int h=n==0?t.height():Math.min(t.height(),Math.max(16,t.height()*geometry().rows()/n));
         int y=t.y()+(maxScroll()==0?0:(t.height()-h)*scroll/maxScroll());
@@ -147,8 +163,8 @@ public final class ChatEmotePicker {
         g.fill(x+2,y+3,x+w+2,y+p.height()+3,0x60000000);
         g.fill(x,y,x+w,y+p.height(),MoonotesTheme.PANEL);g.outline(x,y,w,p.height(),MoonotesTheme.LINE);
         String title=switch(view){case MEMBERSHIP->"Группы для «"+membershipTarget.name()+"»";case ADD_EMOTES->"Добавить в «"+group+"»";case CREATE->"Создать группу";case RENAME->"Изменить группу";case DELETE->"Удалить группу?";case GROUPS->"Мои группы";default->mode==3&&!group.isEmpty()?"Эмоты · "+group:"Эмоты";};
-        g.text(font,Component.literal(fit(font,title,w-39)),x+8,y+7,MoonotesTheme.TEXT,false);
-        button(g,font,new ChatOverlayGeometry.Rect(x+w-23,y+3,18,15),"×",false,mx,my,"close","Закрыть мини-библиотеку");
+        g.text(font,Component.literal(fit(font,title,w-48)),x+9,y+10,MoonotesTheme.TEXT,false);
+        button(g,font,new ChatOverlayGeometry.Rect(x+w-28,y+4,20,20),"×",false,mx,my,"close","Закрыть мини-библиотеку");
         if(form()){
             g.fill(x+8,y+23,x+w-8,y+24,MoonotesTheme.LINE);
             if(namingGroup()){
@@ -167,7 +183,7 @@ public final class ChatEmotePicker {
         }else{
             for(int i=0;i<4;i++)button(g,font,tab(i),TABS[i],mode==i,mx,my,"tab"+i,switch(i){case 0->"Ваши избранные эмоты";case 1->"Недавно вставленные эмоты";case 2->"Все эмоты активных каталогов чата";default->"Ваши группы: создать, выбрать и изменить";});
             if(p.hasInputLabel()){
-                String label=view==View.MEMBERSHIP?"Отметьте группы для этого эмота":view==View.ADD_EMOTES?"Отметьте эмоты · в группе: "+preferences.groupSize(group):view==View.GROUPS?"Поиск групп · "+preferences.groupNames().size()+"/"+LibraryPreferences.MAX_GROUPS:"Поиск по названию";
+                String label=view==View.MEMBERSHIP?"Отметьте группы для этого эмота":view==View.ADD_EMOTES?"Отметьте эмоты · в группе: "+preferences.groupSize(group):view==View.GROUPS?"Поиск групп · "+preferences.groupNames().size()+" групп":"Поиск по названию";
                 g.text(font,Component.literal(fit(font,label,w-16)),x+8,p.inputLabelY(),MoonotesTheme.MUTED,false);
             }
             clampScroll();int count=rowCount();
@@ -189,7 +205,7 @@ public final class ChatEmotePicker {
         }
     }
     private void drawRow(GuiGraphicsExtractor g,Font font,int visibleIndex,int index,int mx,int my){
-        var r=geometry().row(visibleIndex);boolean hover=r.contains(mx,my);
+        var r=listRow(visibleIndex);boolean hover=r.contains(mx,my);
         boolean subAction=view==View.EMOTES?mx>=star(r).x()-3:view==View.GROUPS?mx>=more(r).x()-3:false;
         g.fill(r.x(),r.y(),r.x()+r.width(),r.y()+r.height(),MoonotesTheme.CARD);
         if(rowHighlight==index||hover&&!subAction){int right=subAction?r.x()+r.width():view==View.EMOTES?star(r).x()-3:view==View.GROUPS?more(r).x()-3:r.x()+r.width();g.fill(r.x(),r.y(),right,r.y()+r.height(),hover?MoonotesTheme.HOVER:0xFF294360);}
@@ -240,7 +256,7 @@ public final class ChatEmotePicker {
         if(open){
             var p=geometry();
             if(!p.bounds().contains(x,y)){open=false;draggingScroll=false;return Click.CLOSE;}
-            if(new ChatOverlayGeometry.Rect(p.x()+p.width()-23,p.y()+3,18,15).contains(x,y)){open=false;return Click.CLOSE;}
+            if(new ChatOverlayGeometry.Rect(p.x()+p.width()-28,p.y()+4,20,20).contains(x,y)){open=false;return Click.CLOSE;}
             for(int i=0;!form()&&i<4;i++)if(tab(i).contains(x,y)){mode=i;view=i==3?View.GROUPS:View.EMOTES;resetView();return Click.EDIT_GROUP;}
             if(form())return clickForm(x,y);
             if(new ChatOverlayGeometry.Rect(searchX(),searchY(),searchWidth(),18).contains(x,y))return Click.SEARCH;
@@ -258,17 +274,17 @@ public final class ChatEmotePicker {
                 if(footer(1,3).contains(x,y)){view=View.ADD_EMOTES;resetView();return Click.EDIT_GROUP;}
                 if(footer(2,3).contains(x,y)){beginForm(View.RENAME);return Click.EDIT_GROUP;}
             }
-            for(int i=0;i<p.rows();i++)if(p.row(i).contains(x,y)&&i+scroll<rowCount()){
+            for(int i=0;i<p.rows();i++)if(listRow(i).contains(x,y)&&i+scroll<rowCount()){
                 int index=i+scroll;
                 if(groupRows()){
-                    if(view==View.GROUPS&&more(p.row(i)).contains(x,y)){group=groups().get(index);beginForm(View.RENAME);return Click.EDIT_GROUP;}
+                    if(view==View.GROUPS&&more(listRow(i)).contains(x,y)){group=groups().get(index);beginForm(View.RENAME);return Click.EDIT_GROUP;}
                     return activateGroup(index);
                 }
                 var emote=palette().get(index);
                 if(view==View.ADD_EMOTES){preferences.toggleGroup(group,emote.key());paletteStamp="";return Click.CONSUMED;}
-                if(button==InputConstants.MOUSE_BUTTON_RIGHT||more(p.row(i)).contains(x,y)){beginMembership(emote);return Click.EDIT_GROUP;}
-                if(star(p.row(i)).contains(x,y)){preferences.toggle(emote.key());invalidate();return Click.CONSUMED;}
-                if(x>=star(p.row(i)).x()-3)return Click.CONSUMED;
+                if(button==InputConstants.MOUSE_BUTTON_RIGHT||more(listRow(i)).contains(x,y)){beginMembership(emote);return Click.EDIT_GROUP;}
+                if(star(listRow(i)).contains(x,y)){preferences.toggle(emote.key());invalidate();return Click.CONSUMED;}
+                if(x>=star(listRow(i)).x()-3)return Click.CONSUMED;
                 if(insert(draft,emote,false)){open=false;return Click.INSERT;}return Click.CONSUMED;
             }
             return Click.CONSUMED;

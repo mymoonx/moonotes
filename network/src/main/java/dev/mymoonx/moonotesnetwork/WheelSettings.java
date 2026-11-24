@@ -57,6 +57,7 @@ final class WheelSettings {
     synchronized int page(){return page;}
     synchronized int pageCount(){return pages.size();}
     synchronized String pageTitle(){return pages.get(page).title;}
+    synchronized String pageTitle(int index){return pages.get(Math.clamp(index,0,pages.size()-1)).title;}
     synchronized String pageGroup(){return pages.get(page).group;}
     synchronized String error(){return error;}
     synchronized boolean configured(){return configured;}

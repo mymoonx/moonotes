@@ -11,6 +11,7 @@ final class ChatButtonPlacement {
     private static final Gson JSON=new Gson();
     static final class Data {
         int pickerRight=96,pickerBottom=18,managerRight=6,managerBottom=18;
+        boolean together;
     }
     private static final class Holder {
         static final ChatButtonPlacement LOCAL=new ChatButtonPlacement(
@@ -30,6 +31,7 @@ final class ChatButtonPlacement {
         Data out=new Data();
         out.pickerRight=d.pickerRight;out.pickerBottom=d.pickerBottom;
         out.managerRight=d.managerRight;out.managerBottom=d.managerBottom;
+        out.together=d.together;
         return out;
     }
     synchronized Data draft(){return copy(saved);}

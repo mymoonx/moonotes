@@ -16,6 +16,14 @@ final class SupportPreferences {
     enum Performance { ECONOMY("Экономичный"), BALANCED("Сбалансированный"), HIGH("Высокое качество");
         final String label; Performance(String label) { this.label=label; }
     }
+    enum UpdateChannel {
+        STABLE("Стабильные"), BETA("Stable + Beta");
+        final String label; UpdateChannel(String label){this.label=label;}
+    }
+    enum UpdateMode {
+        OFF("Выключено"), NOTIFY("Уведомлять"), DOWNLOAD("Скачивать"), INSTALL("Устанавливать при выходе");
+        final String label; UpdateMode(String label){this.label=label;}
+    }
     private static final class Holder {
         static final SupportPreferences LOCAL = new SupportPreferences(
             net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("moonotes-support.json"));
@@ -23,12 +31,16 @@ final class SupportPreferences {
     static SupportPreferences local() { return Holder.LOCAL; }
     private static final class Data {
         Boolean telemetryOptIn, allowManualReports, updateNotifications;
-        String performance;
+        String performance, updateChannel, updateMode;
+        Long lastUpdateCheck;
     }
 
     private final Path path;
     private boolean telemetryOptIn, allowManualReports=true, updateNotifications;
     private Performance performance=Performance.BALANCED;
+    private UpdateChannel updateChannel=UpdateChannel.STABLE;
+    private UpdateMode updateMode=UpdateMode.NOTIFY;
+    private long lastUpdateCheck;
     private String status="";
 
     SupportPreferences(Path file) { path=file; read(); }
@@ -37,6 +49,20 @@ final class SupportPreferences {
     synchronized boolean updateNotifications(){return updateNotifications;}
     synchronized Performance performance(){return performance;}
     synchronized String status(){return status;}
+    synchronized UpdateChannel updateChannel(){return updateChannel;}
+    synchronized UpdateMode updateMode(){return updateMode;}
+    synchronized long lastUpdateCheck(){return lastUpdateCheck;}
+    synchronized void cycleUpdateChannel(){
+        updateChannel=updateChannel==UpdateChannel.STABLE?UpdateChannel.BETA:UpdateChannel.STABLE;
+        lastUpdateCheck=0;write();
+    }
+    synchronized void cycleUpdateMode(){
+        updateMode=UpdateMode.values()[(updateMode.ordinal()+1)%UpdateMode.values().length];
+        write();
+    }
+    synchronized void checkedNow(long now){
+        lastUpdateCheck=Math.max(0,now);write();
+    }
 
     synchronized void toggleTelemetry(){telemetryOptIn=!telemetryOptIn;if(!telemetryOptIn)MoonotesTelemetry.clear();write();}
     synchronized void toggleManualReports(){allowManualReports=!allowManualReports;write();}
@@ -57,6 +83,11 @@ final class SupportPreferences {
             updateNotifications=Boolean.TRUE.equals(d.updateNotifications);
             try{if(d.performance!=null)performance=Performance.valueOf(d.performance);}
             catch(IllegalArgumentException ignored){performance=Performance.BALANCED;}
+            try{if(d.updateChannel!=null)updateChannel=UpdateChannel.valueOf(d.updateChannel);}
+            catch(IllegalArgumentException ignored){updateChannel=UpdateChannel.STABLE;}
+            try{if(d.updateMode!=null)updateMode=UpdateMode.valueOf(d.updateMode);}
+            catch(IllegalArgumentException ignored){updateMode=UpdateMode.NOTIFY;}
+            lastUpdateCheck=d.lastUpdateCheck==null?0:Math.clamp(d.lastUpdateCheck,0,System.currentTimeMillis());
         } catch(IOException|RuntimeException e){status="Настройки поддержки не прочитаны";telemetryOptIn=false;}
     }
     private synchronized void write(){
@@ -65,6 +96,9 @@ final class SupportPreferences {
             d.allowManualReports=allowManualReports;
             d.updateNotifications=updateNotifications;
             d.performance=performance.name();
+            d.updateChannel=updateChannel.name();
+            d.updateMode=updateMode.name();
+            d.lastUpdateCheck=lastUpdateCheck;
             byte[] bytes=JSON.toJson(d).getBytes(StandardCharsets.UTF_8);
             if(bytes.length>8192)throw new IOException("Size");
             Files.createDirectories(path.toAbsolutePath().getParent());

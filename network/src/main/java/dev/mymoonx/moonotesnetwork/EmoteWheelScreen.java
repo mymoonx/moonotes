@@ -167,7 +167,13 @@ final class EmoteWheelScreen extends Screen {
             if (!ExtrasSettings.local().reactions()) {
                 status = "Реакции выключены в настройках Moonotes";
                 statusUntil = System.currentTimeMillis() + 3500;
-            } else { LocalReactions.show(emote); onClose(); }
+            } else if (LocalReactions.show(emote)) {
+                // Close first so the HUD can render the accepted local reaction.
+                onClose();
+            } else {
+                status = "Не удалось показать реакцию — проверь эмот и кеш";
+                statusUntil = System.currentTimeMillis() + 3500;
+            }
             return true;
         }
         return false;

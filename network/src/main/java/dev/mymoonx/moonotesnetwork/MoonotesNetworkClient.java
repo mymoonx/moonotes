@@ -169,6 +169,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             offeredInWorld = false;
             activeWorldKey = ServerCatalogProfiles.worldKey(
                 client.getCurrentServer() == null ? "singleplayer" : client.getCurrentServer().ip);
+            WheelSettings.local().setWorld(activeWorldKey);
             if (config.serverProfiles) {
                 String preferred = PROFILES.getOrDefault(activeWorldKey, CATALOGS.selected());
                 if ("all".equals(preferred) || CATALOGS.get(preferred) != null) {

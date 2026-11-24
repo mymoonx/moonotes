@@ -38,6 +38,7 @@ public final class ChatEmotePicker {
     }
     public void resize(int width,int height){this.width=width;this.height=height;draggingScroll=false;clampScroll();}
     public boolean isOpen(){return open;}
+    public void openFromShortcut(){open=true;draggingScroll=false;view=View.EMOTES;selection.reset();}
     public String search(){return search;}
     public String groupName(){return groupNameInput;}
     public boolean namingGroup(){return view==View.CREATE||view==View.RENAME;}

@@ -1,4 +1,6 @@
 {
   "key.moonotes_network.wheel": "Колесо эмотов",
-  "key.category.moonotes_network.gameplay": "Moonotes"
+  "key.category.moonotes_network.gameplay": "Moonotes",
+  "key.moonotes_network.manager": "Открыть меню Moonotes",
+  "key.moonotes_network.picker": "Открыть мини-библиотеку"
 }

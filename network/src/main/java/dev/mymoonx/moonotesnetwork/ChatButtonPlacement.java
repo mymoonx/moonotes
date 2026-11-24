@@ -9,7 +9,7 @@ import java.io.IOException;
 final class ChatButtonPlacement {
     static final int PICKER=0, MANAGER=1;
     private static final Gson JSON=new Gson();
-    private static final class Data {
+    static final class Data {
         int pickerRight=96,pickerBottom=18,managerRight=6,managerBottom=18;
     }
     private static final class Holder {

@@ -131,6 +131,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         volatile boolean autoCatalogSync = true;
         volatile boolean serverProfiles = true;
         volatile boolean chatSuggestions = true;
+        volatile boolean chatSuggestionArrows = false; // opt-in; never steal caret navigation by default
         volatile boolean chatPicker = true;
         volatile boolean hudProgress = true;
         volatile int hudCorner = 1; // 0 left top, 1 right top, 2 left bottom, 3 right bottom
@@ -657,6 +658,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     }
     static boolean chatSuggestionsEnabled() { return config.chatSuggestions && config.enabled; }
     static void toggleChatSuggestions() { config.chatSuggestions = !config.chatSuggestions; saveConfig(); }
+    static boolean chatSuggestionArrows() { return config.chatSuggestionArrows; }
+    static void toggleChatSuggestionArrows() { config.chatSuggestionArrows = !config.chatSuggestionArrows; saveConfig(); }
     static boolean chatPickerEnabled() { return config.chatPicker && config.enabled; }
     static void toggleChatPicker() { config.chatPicker = !config.chatPicker; saveConfig(); }
     static String notificationMode(){return NotificationQueue.mode(config.noticeMode);}

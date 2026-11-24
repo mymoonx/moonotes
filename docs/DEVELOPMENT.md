@@ -2,14 +2,14 @@
 
 Здесь собраны исходники, сборка, проверки и техническая документация Moonotes. **Для обычной установки эти шаги не нужны** — используйте [готовые JAR из Releases](https://github.com/mymoonx/moonotes/releases/latest).
 
-[← Главная страница](../README.md) · [🖼 Галерея](SCREENSHOTS.md) · [📦 Релиз v0.5.3](https://github.com/mymoonx/moonotes/releases/tag/v0.5.3)
+[← Главная страница](../README.md) · [🖼 Галерея](SCREENSHOTS.md) · [📦 Релиз v0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0)
 
 ## Структура проекта
 
 | Компонент | Каталог | Назначение |
 | --- | --- | --- |
 | **Moonotes 0.4.1** | [`moonotes/`](../moonotes/) | Клиентский аддон Streamotes: ввод, предпросмотр и каналы текущего мира |
-| **Moonotes Network 0.5.3** | [`network/`](../network/) | Каталоги 7TV, библиотека, группы, загрузка, подсказки и HUD |
+| **Moonotes Network 0.6.0** | [`network/`](../network/) | Каталоги 7TV, библиотека, группы, загрузка, подсказки и HUD |
 | **Cloudflare Worker 0.5.3** | [`worker/`](../worker/) | Резервное получение каталогов и изображений, кеш R2 |
 
 Это **два самостоятельных Fabric-мода**, каждый со своим `fabric.mod.json` и JAR. Worker **не является модом Minecraft** и не распространяется в папку `mods`.
@@ -64,9 +64,9 @@ npm --prefix worker test
 
 ## Документация и участие
 
-- [README Moonotes Network](../network/README.md) — особенности Network 0.5.3 и обновления.
+- [README Moonotes Network](../network/README.md) — особенности Network и обновления.
 - [CHANGELOG](../CHANGELOG.md) — история изменений.
-- [VERIFICATION](VERIFICATION.md) — что именно проверено для v0.5.3.
+- [VERIFICATION](VERIFICATION.md) — историческая проверка v0.5.3; проверки 0.6.0 перечислены в релизе.
 - [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES.md) — сторонние компоненты и уведомления о лицензиях.
 - [Issues](https://github.com/mymoonx/moonotes/issues) — сообщения о проблемах и предложения.
 

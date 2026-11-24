@@ -31,8 +31,8 @@ public final class MoonotesScreen extends Screen {
     private int tab, sortMode, filterMode, keyboardPosition = -1;
     private final Screen parent;
     private int settingsSection;
-    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5}};
+    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
+    private static final int[][] SETTING_OPTIONS={{8,24,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -218,7 +218,9 @@ public final class MoonotesScreen extends Screen {
                 case 0 -> "Подбор эмотов, мини-библиотека и сообщения о загрузке.";
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
-                default -> "Профили серверов и локальная диагностика.";
+                case 3 -> "Профили серверов и локальная диагностика.";
+                case 4 -> "Колесо реакций и эмоты в игровых текстах (только на этом клиенте).";
+                default -> "Кнопки чата, настройки отправки, копии и диагностика.";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
         var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);
@@ -237,12 +239,17 @@ public final class MoonotesScreen extends Screen {
                     case 6 -> MoonotesNetworkClient.toggleAutoCatalogSync();
                     case 7 -> MoonotesNetworkClient.toggleServerProfiles();
                     case 8 -> MoonotesNetworkClient.toggleChatSuggestions();
+                    case 24 -> MoonotesNetworkClient.toggleChatSuggestionArrows();
                     case 9 -> MoonotesNetworkClient.toggleChatPicker();
                     case 10 -> MoonotesNetworkClient.cycleNotificationMode();
                     case 11 -> MoonotesNetworkClient.toggleHudProgress();
                     case 12 -> MoonotesNetworkClient.cycleHudCorner();
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
+                    case 15,16,17,18,19,20 -> ExtrasSettings.local().cycle(option);
+                    case 21 -> {minecraft.gui.setScreen(new ChatButtonsScreen(this));return;}
+                    case 22 -> {minecraft.gui.setScreen(new MoonotesSupportScreen(this));return;}
+                    case 23 -> {minecraft.gui.setScreen(new ChatRoutingScreen(this));return;}
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -251,7 +258,7 @@ public final class MoonotesScreen extends Screen {
         }
         reportButton=button(layout.footer(0,4),"Отчёт","Локальная диагностика: версии, счётчики и категории ошибок. Отправки данных нет.",false,b->openReport());
         button(layout.footer(1,4),"Кеш","Проверка изображений и анимации, восстановление отсутствующих файлов.",false,b->{cacheOpen=true;rebuildMoonotesWidgets();});
-        button(layout.footer(2,4),"Что нового","Изменения версии 0.5.3. Доступны без интернета.",false,b->openReleaseNotes());
+        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0. Доступны без интернета.",false,b->openReleaseNotes());
         button(layout.footer(3,4),"События","Недавние сообщения Moonotes, в том числе при выключенных уведомлениях.",false,b->openEventLog());
     }
 
@@ -266,11 +273,21 @@ public final class MoonotesScreen extends Screen {
             case 6 -> "Обновление каталогов";
             case 7 -> "Профили серверов";
             case 8 -> "Подсказки в чате";
+            case 24 -> "Выбор эмотов стрелками";
             case 9 -> "Мини-библиотека";
             case 10 -> "Уведомления";
             case 11 -> "Фоновая загрузка на экране";
             case 12 -> "Угол экрана";
             case 14 -> "Уведомления Streamotes";
+            case 15 -> "Колесо быстрых эмотов";
+            case 16 -> "Реакции над персонажем";
+            case 17 -> "Длительность реакции";
+            case 18 -> "Эмоты на табличках";
+            case 19 -> "Эмоты в книгах";
+            case 20 -> "Эмоты в названиях предметов";
+            case 21 -> "Расположение кнопок чата";
+            case 23 -> "Глобальный чат";
+            case 22 -> "Диагностика и поддержка";
             default -> "Расположение HUD";
         };
     }
@@ -285,11 +302,16 @@ public final class MoonotesScreen extends Screen {
             case 6 -> onOff(MoonotesNetworkClient.autoCatalogSync());
             case 7 -> onOff(MoonotesNetworkClient.serverProfilesEnabled());
             case 8 -> onOff(MoonotesNetworkClient.chatSuggestionsEnabled());
+            case 24 -> onOff(MoonotesNetworkClient.chatSuggestionArrows());
             case 9 -> onOff(MoonotesNetworkClient.chatPickerEnabled());
             case 10 -> MoonotesNetworkClient.notificationModeLabel();
             case 11 -> onOff(MoonotesNetworkClient.hudProgressEnabled());
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
+            case 15,16,17,18,19,20 -> ExtrasSettings.local().value(option);
+            case 21 -> "Расположить кнопки…";
+            case 23 -> "Настроить префикс…";
+            case 22 -> "Открыть центр поддержки…";
             default -> "Настроить расположение…";
         };
     }
@@ -304,12 +326,22 @@ public final class MoonotesScreen extends Screen {
             case 5 -> "Локальные счётчики и безопасные категории ошибок для поиска неполадок.\nВ отчёт не включаются ник, IP, чат, адрес сервера и пути к файлам.\nНичего автоматически не отправляется. Выключение очищает счётчики.";
             case 6 -> "Раз в сутки проверять изменения каталога. Новые эмоты только в списке: изображения не скачиваются без согласия.";
             case 7 -> "При входе на сервер восстановить выбранный каталог библиотеки. Адрес сервера сохраняется в локальном профиле только как хеш.";
-            case 8 -> "Компактная лента подходящих эмотов. Tab и стрелки выбирают, пробел вставляет выбранный эмот. Пока выбор не активирован, пробел работает как обычно. Esc скрывает подсказки. /Команды не меняются.";
+            case 8 -> "Компактная лента подходящих эмотов. Tab и Shift+Tab выбирают, пробел вставляет выбранный эмот. Стрелки по умолчанию редактируют строку как обычно. Esc скрывает подсказки. /Команды не меняются.";
+            case 24 -> "Необязательное управление подсказками стрелками ↑ ↓ ← →. По умолчанию выключено, чтобы стрелки в чате передвигали курсор и открывали историю сообщений. Tab и Shift+Tab работают независимо.";
             case 9 -> "Кнопка «Эмоты» рядом со строкой чата открывает избранное, недавние, группы и поиск. Звезда меняет избранное; меню эмота управляет группами. Вставка добавляет текст в чат без отправки.";
             case 10 -> "Всплывающие, только ошибки, сообщения в чате или без уведомлений. Последние события остаются в журнале. Для основного Moonotes общий режим поддерживается с версии 0.4.1.";
             case 11 -> "Во время фоновой загрузки показывать небольшую шкалу в HUD. Скрывается автоматически и клавишей F1.";
             case 12 -> "Переставить HUD в один из четырёх углов. Точное положение можно настроить перетаскиванием.";
             case 14 -> "Автоматические сообщения Streamotes показываются по очереди с Moonotes, без наложения. Способ показа задаёт настройка «Уведомления». Если сообщения отключены в самом Streamotes, они останутся отключены. «Отдельно» возвращает обычные уведомления Streamotes.";
+            case 15 -> "Нажмите G. В колесе можно настроить 8 слотов и выбрать локальный или глобальный (!) чат. ЛКМ — отправить, Shift+ЛКМ — черновик, ПКМ — своя реакция.";
+            case 16 -> "Эмот над персонажем уменьшается с расстоянием и скрывается за стенами. В первом лице — маленькое превью слева сверху. ПКМ не отправляет реакцию другим игрокам.";
+            case 17 -> "Время показа реакции: 2, 4 или 6 секунд.";
+            case 18 -> "Эмоты активных каталогов рисуются отдельными изображениями на обычных и подвесных табличках. До загрузки картинки видно имя. Исходный текст сохраняется.";
+            case 19 -> "Эмоты активных каталогов в готовых книгах, на кафедрах и в редакторе. Изображение занимает место имени; курсор, ссылки и сохранение текста работают как обычно.";
+            case 20 -> "Показывать известные эмоты в названиях предметов. Никакие данные предметов не изменяются.";
+            case 21 -> "Перетащить кнопки в открытом чате, объединить их для совместного движения. Горячие клавиши меняются в Настройки Minecraft → Управление → Moonotes.";
+            case 23 -> "Локальный/глобальный чат; символ глобального сообщения (например, !, #, @) сохраняется отдельно для каждого сервера. Командные префиксы /g не поддерживаются.";
+            case 22 -> "Самопроверка, безопасный отчёт, резервное копирование, режим качества и ручная проверка новых версий. Никакой автоматической отправки логов.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }
@@ -380,7 +412,7 @@ public final class MoonotesScreen extends Screen {
         g.fill(p.x()+1,p.y()+29,p.right()-1,p.y()+30,MoonotesTheme.LINE);
         g.fill(p.x()+1,layout.footerY-5,p.right()-1,p.bottom()-1,0xFF111B2B);
         text(g,"MOONOTES",layout.contentX,p.y()+11,TEXT);
-        String author=p.width()>=440?"mymoon_x · 0.5.3":"";
+        String author=p.width()>=440?"mymoon_x · 0.6.0 α3":"";
         int authorX=layout.authorRight()-font.width(author);
         int cacheX=layout.contentX+83+(layout.wide?106:58)+8;
         int cacheWidth=Math.max(0,authorX-cacheX-8);
@@ -637,9 +669,33 @@ public final class MoonotesScreen extends Screen {
         releaseNotesOpen=true;eventsOpen=false;
         reportOpen=true;reportScroll.row=0;reportScroll.release();
         report=String.join("\n",
-            "Moonotes Network 0.5.3 — загрузка каталогов и управление",
+            "Moonotes Network 0.6.0 — удобный чат и реакции",
             "",
-            "ЗАГРУЗКА",
+            "НОВОЕ В 0.6.0",
+            "• Стрелки не выбирают эмоты во время набора сообщения: курсор и история чата работают как обычно.",
+            "• Tab и Shift+Tab продолжают выбирать подсказку. Стрелки можно вручную включить в «Настройки → Чат».",
+            "• ПКМ по эмоту обновляет свою локальную реакцию даже при быстром повторении.",
+            "• Если картинка реакции не готова, отображается имя или заглушка; в первом лице панель заметнее.",
+            "• Реакции ПКМ локальные: они не рассылаются другим игрокам без сетевой поддержки.",
+            "",
+            "РАНЕЕ В BETA.5 И BETA.4",
+            "• Исправлены дубли названия страницы, улучшен редактор, добавлен крупный анимированный предпросмотр эмотов.",
+            "",
+            "ИНТЕРФЕЙС",
+            "• Страницы колеса показаны внутри кольца. Редактор использует выбор страницы и меню дополнительных действий.",
+            "• Мини-библиотека компактна, при одном элементе не занимает лишнюю высоту; отступы, крестик и скроллбар выровнены.",
+            "• Диагностика, качество, данные и обновления распределены по отдельным разделам.",
+            "• Редактор кнопок чата с совместным перемещением; префикс глобального чата перенесён в отдельные настройки.",
+            "",
+            "ОБНОВЛЕНИЯ",
+            "• Stable / Beta и режимы уведомления, скачивания и установки при выходе.",
+            "• Для загрузки обязателен SHA-256 релиза и проверка fabric.mod.json. Старый JAR сохраняется для отката.",
+            "• JAR никогда не меняется во время работы Minecraft; установка выполняется отдельным процессом после завершения игры.",
+            "",
+            "СОХРАННОСТЬ",
+            "• Настройки, группы, прежние страницы и кеш не удаляются. Отправка телеметрии автоматически не выполняется.",
+            "",
+            "РАНЕЕ В 0.5.3",
             "• Исправлены адреса изображений новых каталогов: 7TV получает канонический идентификатор, общий кеш сохраняет прежние имена файлов.",
             "• Для загрузки через Cloudflare нужен Worker 0.5.3. Готовые изображения повторно скачивать не нужно.",
             "",
@@ -711,7 +767,7 @@ public final class MoonotesScreen extends Screen {
         g.fill(box.x()-1,box.y()-1,box.right()+1,box.bottom()+1,0xFF6C8EB9);
         g.fill(box.x(),box.y(),box.right(),box.bottom(),0xFF1C2C43);
         g.fill(box.x(),box.y(),box.right(),box.y()+25,0xFF2A405E);
-        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в 0.5.3":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
+        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в 0.6.0":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
         text(g,modalTitle,box.x()+12,box.y()+9,TEXT);
         if(catalogPreviewOpen){drawCatalogPreview(g,box);return;}
         if(catalogFormOpen){drawCatalogForm(g,box);return;}

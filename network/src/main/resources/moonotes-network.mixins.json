@@ -9,7 +9,12 @@
     "StreamotesLocalChannelMixin",
     "StreamotesLocalImageMixin",
     "ChatPickerMixin",
-    "EditBoxSelectionAccessor"
+    "EditBoxSelectionAccessor",
+    "SignTextMixin",
+    "BookTextMixin",
+    "BookEditBoxMixin",
+    "BookLineViewAccessor",
+    "ItemNameMixin"
   ],
   "injectors": {
     "defaultRequire": 1

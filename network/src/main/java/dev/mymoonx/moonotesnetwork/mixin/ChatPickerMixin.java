@@ -42,6 +42,7 @@ public abstract class ChatPickerMixin extends Screen {
     @Inject(method="init",at=@At("TAIL"))
     private void moonotes$init(CallbackInfo ci){
         moonotes$picker.resize(width,height);
+        if(dev.mymoonx.moonotesnetwork.ChatPickerShortcut.consume())moonotes$picker.openFromShortcut();
         // Event child only: drawn once after the overlay in its own stratum.
         moonotes$search=addWidget(new MoonotesEditBox(font,moonotes$picker.searchX(),moonotes$picker.searchY(),
             moonotes$picker.searchWidth(),18,Component.literal("Поиск Moonotes")));

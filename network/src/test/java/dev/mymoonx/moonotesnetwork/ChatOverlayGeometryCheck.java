@@ -18,6 +18,13 @@ public final class ChatOverlayGeometryCheck {
             check(form.inputLabelY()+9<form.input().y(),"group name has its own label");
             check(form.input().y()+form.input().height()+8<form.footerY(),"group name and form buttons cannot overlap");
             check(form.footer(0,3).x()+form.footer(0,3).width()<form.footer(1,3).x(),"form actions have separate hitboxes");
+            var compact=ChatOverlayGeometry.forScreen(pair[0],pair[1],false,1);
+            check(compact.rows()==1,"a single emote/group uses a compact one-row popup");
+            check(compact.height()<=g.height(),"short result lists never leave unused empty space");
+            check(compact.footer(0,1).y()+compact.footer(0,1).height()
+                <=compact.y()+compact.height()-8,"footer has at least 8px bottom padding");
+            check(compact.row(0,false).width()>compact.row(0,true).width(),
+                "scrollbar space is not reserved when no scrolling is needed");
             var picker=ChatOverlayGeometry.pickerButton(pair[0],pair[1]);var manager=ChatOverlayGeometry.managerButton(pair[0],pair[1]);
             check(picker.x()+picker.width()<manager.x(),"chat buttons have separate hit boxes");
             check(manager.y()+manager.height()<pair[1]-14,"buttons never cover chat input");

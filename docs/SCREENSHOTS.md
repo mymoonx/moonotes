@@ -1,14 +1,14 @@
 # 🖼 Галерея Moonotes
 
-**11 скриншотов из Minecraft Java 26.3:** 8 основных и 3 новых из alpha.4. Нажмите на изображение, чтобы открыть его в полном размере.
+**11 скриншотов из Minecraft Java 26.3:** 8 из версии 0.5.3 и 3 из ранней 0.6.0-alpha.4. Интерфейс стабильной 0.6.0 дополнительно улучшен. Нажмите на изображение, чтобы открыть его в полном размере.
 
 [← Главная страница](../README.md) · [📦 Стабильная версия](https://github.com/mymoonx/moonotes/releases/latest) · [🌙 Alpha.4](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-alpha.4) · [🛠 Разработчикам](DEVELOPMENT.md)
 
 ---
 
-## 🆕 Moonotes 0.6.0-alpha.4 — новые функции
+## Moonotes 0.6.0-alpha.4 — архивные скриншоты
 
-Три игровых скриншота предварительной версии. [Скачать 0.6.0-alpha.4](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-alpha.4) · [Подробное описание изменений](https://github.com/mymoonx/moonotes/blob/feature/emote-wheel-world-reactions/docs/EXTRAS.md).
+Три игровых скриншота предварительной версии. Для актуальной стабильной сборки используйте [Moonotes 0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0). [Скачать 0.6.0-alpha.4](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-alpha.4) · [Подробное описание изменений](https://github.com/mymoonx/moonotes/blob/feature/emote-wheel-world-reactions/docs/EXTRAS.md).
 
 | **9. Колесо быстрых эмотов** | **10. Настройка колеса** |
 | :---: | :---: |

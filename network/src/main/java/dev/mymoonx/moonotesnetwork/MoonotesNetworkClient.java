@@ -131,6 +131,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         volatile boolean autoCatalogSync = true;
         volatile boolean serverProfiles = true;
         volatile boolean chatSuggestions = true;
+        volatile boolean chatSuggestionArrows = false; // opt-in; never steal caret navigation by default
         volatile boolean chatPicker = true;
         volatile boolean hudProgress = true;
         volatile int hudCorner = 1; // 0 left top, 1 right top, 2 left bottom, 3 right bottom
@@ -156,8 +157,13 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         readConfig();
+        LegacyIdentityCleanup.run();
         MoonotesNotifications.register();
         StreamotesBridge.initialize();
+        ChatButtonPlacement.local();
+        WheelKeybind.register();
+        LocalReactionOverlay.register();
+        ChatReactionObserver.register();
         loadInitialManifest();
         requestCacheScan();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -165,6 +171,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             offeredInWorld = false;
             activeWorldKey = ServerCatalogProfiles.worldKey(
                 client.getCurrentServer() == null ? "singleplayer" : client.getCurrentServer().ip);
+            WheelSettings.local().setWorld(activeWorldKey);
             if (config.serverProfiles) {
                 String preferred = PROFILES.getOrDefault(activeWorldKey, CATALOGS.selected());
                 if ("all".equals(preferred) || CATALOGS.get(preferred) != null) {
@@ -181,6 +188,10 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             inWorld = false;
             MoonotesNotifications.clearTransient();
+            LocalReactionOverlay.disconnect();
+            SignEmoteRenderer.reset();
+            BookEmoteRenderer.disconnect();
+            WorldImageRequests.reset();
             // Keep the last validated manifest for the next world / offline use.
         });
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
@@ -198,6 +209,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             }
         }
         if (joinDelay > 0 && --joinDelay == 0 && !offeredInWorld) {
+            MoonotesUpdateCheck.maybeCheck(); // Once daily; background network only, opt-out in Support.
             long now = System.currentTimeMillis();
             if (config.autoCatalogSync && CatalogRefreshPolicy.due(config.lastCatalogCheckMs, now)) {
                 config.lastCatalogCheckMs = now;
@@ -646,6 +658,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     }
     static boolean chatSuggestionsEnabled() { return config.chatSuggestions && config.enabled; }
     static void toggleChatSuggestions() { config.chatSuggestions = !config.chatSuggestions; saveConfig(); }
+    static boolean chatSuggestionArrows() { return config.chatSuggestionArrows; }
+    static void toggleChatSuggestionArrows() { config.chatSuggestionArrows = !config.chatSuggestionArrows; saveConfig(); }
     static boolean chatPickerEnabled() { return config.chatPicker && config.enabled; }
     static void toggleChatPicker() { config.chatPicker = !config.chatPicker; saveConfig(); }
     static String notificationMode(){return NotificationQueue.mode(config.noticeMode);}
@@ -672,8 +686,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     public static void notifyAddon(String title,String message,boolean error){
         MoonotesNotifications.notifyUser(title,message,error);
     }
-    static boolean releaseNotesPending() { return !"0.5.3".equals(config.releaseShownVersion); }
-    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.5.3"; saveConfig(); }
+    static boolean releaseNotesPending() { return !"0.6.0".equals(config.releaseShownVersion); }
+    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.6.0"; saveConfig(); }
 
     static boolean retryDownloads() { return config.retryDownloads; }
     static void toggleRetryDownloads() { config.retryDownloads = !config.retryDownloads; saveConfig(); }

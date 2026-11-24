@@ -19,7 +19,22 @@ final class WheelKeybind {
             Identifier.fromNamespaceAndPath("moonotes_network", "gameplay"));
         KeyMapping wheel = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.moonotes_network.wheel", InputConstants.Type.KEYBOARD, InputConstants.KEY_G, category));
+        // Unbound by default to avoid conflicting with existing Minecraft/mod keys.
+        KeyMapping manager = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.moonotes_network.manager", InputConstants.Type.KEYBOARD, -1, category));
+        KeyMapping picker = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, -1, category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (manager.consumeClick()) {
+                if(client.player!=null&&client.gui.screen()==null)
+                    client.gui.setScreen(new MoonotesScreen());
+            }
+            while (picker.consumeClick()) {
+                if(client.player!=null&&client.gui.screen()==null){
+                    ChatPickerShortcut.request();
+                    client.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("",false));
+                }
+            }
             while (wheel.consumeClick()) {
                 if (client.player != null && client.gui.screen() == null
                     && ExtrasSettings.local().wheel()) {

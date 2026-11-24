@@ -31,7 +31,19 @@
 | <a href="assets/screenshots/01-library.jpg"><img src="assets/screenshots/01-library.jpg" width="440" alt="Библиотека эмотов Moonotes"></a> | <a href="assets/screenshots/04-quick-picker.jpg"><img src="assets/screenshots/04-quick-picker.jpg" width="440" alt="Мини-библиотека эмотов в Minecraft"></a> |
 | Поиск, просмотр и избранное | Вставка названий эмотов прямо в чат |
 
-**[Посмотреть все 8 скриншотов с описаниями →](docs/SCREENSHOTS.md)**
+**[Посмотреть галерею: 8 основных и 3 новых скриншота →](docs/SCREENSHOTS.md)**
+
+
+### 🆕 Moonotes 0.6.0-alpha.4 — новые возможности
+
+**[Скачать предварительную версию 0.6.0-alpha.4](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-alpha.4)** — колесо реакций, эмоты на табличках и в книгах. Эта сборка пока тестируется; стабильной остаётся 0.5.3.
+
+| Колесо быстрых эмотов | Эмоты на табличке |
+| :---: | :---: |
+| <a href="assets/screenshots/alpha4/01-emote-wheel.webp"><img src="assets/screenshots/alpha4/01-emote-wheel.webp" width="440" alt="Колесо эмотов Moonotes 0.6.0-alpha.4"></a> | <a href="assets/screenshots/alpha4/02-emotes-on-sign.webp"><img src="assets/screenshots/alpha4/02-emotes-on-sign.webp" width="440" alt="Эмоты Moonotes на табличке Minecraft"></a> |
+| Восемь настраиваемых слотов, выбор локального и глобального чата | Изображения эмотов непосредственно на табличках Minecraft |
+
+[Показать настройку колеса и остальные скриншоты](docs/SCREENSHOTS.md)
 
 ## 📦 Установка
 

@@ -21,7 +21,7 @@ import org.joml.Vector4f;
  * packets. It is local to Moonotes clients; no server plugin required.
  */
 final class LocalReactionOverlay {
-    private static final int SELF_PREVIEW_SIZE = 16;
+    private static final int SELF_PREVIEW_SIZE = 26;
     private static boolean initialized;
     private static EmotePreviews previews;
 
@@ -69,13 +69,17 @@ final class LocalReactionOverlay {
             if (rendered >= maxReactions) break; // bounded even in crowded servers
             Player player = mc.level.getPlayerByUUID(visual.player());
             if (player == null || player.isInvisible()) continue;
-            boolean firstPersonSelf = player == mc.player && camera.entity() == mc.player
-                && mc.options.getCameraType().isFirstPerson();
+            boolean firstPersonSelf = player == mc.player && mc.options.getCameraType().isFirstPerson();
             if (firstPersonSelf) {
-                // This is explicitly a small self-preview, away from the crosshair.
-                // Other players and the third-person avatar always use world sizing.
-                previews.draw(g, visual.id(), 8, 8, SELF_PREVIEW_SIZE);
-                g.text(mc.font, "Ваша реакция", 29, 12, 0xFFE4F2FF);
+                // Always acknowledge the right-click, even before the cached
+                // image has been decoded. This makes a missing file diagnosable.
+                int panelW = Math.min(width - 12, Math.max(112, 47 + mc.font.width(visual.name())));
+                g.fill(6, 6, 6 + panelW, 43, 0xDB15263B);
+                g.outline(6, 6, panelW, 37, 0xFF6D98BD);
+                drawSpriteOrFallback(g, mc, visual, 11, 11, SELF_PREVIEW_SIZE);
+                g.text(mc.font, "Ваша реакция", 44, 10, 0xFFE4F2FF);
+                String name = mc.font.plainSubstrByWidth(visual.name(), Math.max(10, panelW - 46));
+                g.text(mc.font, name, 44, 24, 0xFFADCCE7);
                 rendered++;
                 continue;
             }
@@ -91,8 +95,25 @@ final class LocalReactionOverlay {
             // camera mods can move the viewer far from the local entity.
             if (!clearView(mc, camPos, head.add(0, -0.1, 0), player)
                     || !clearView(mc, camPos, pos, player)) continue;
-            previews.draw(g, visual.id(), placement.x(), placement.y(), placement.size());
+            drawSpriteOrFallback(g, mc, visual, placement.x(), placement.y(), placement.size());
             rendered++;
+        }
+    }
+
+    private static void drawSpriteOrFallback(GuiGraphicsExtractor g, Minecraft mc,
+                                              LocalReactions.Visual visual, int x, int y, int size) {
+        if (previews.texture(visual.id()) != null) {
+            previews.draw(g, visual.id(), x, y, size);
+        } else {
+            // Cached image can be prepared asynchronously or be missing entirely.
+            // Keep the action visible without inventing a replacement emoji.
+            g.fill(x, y, x + size, y + size, 0xE6263F58);
+            g.outline(x, y, size, size, 0xFF86B7E2);
+            if (size >= 18) {
+                String label = mc.font.plainSubstrByWidth(visual.name(), size - 4);
+                g.centeredText(mc.font, label, x + size / 2,
+                    y + Math.max(1, (size - mc.font.lineHeight) / 2), 0xFFF3F8FE);
+            }
         }
     }
 

@@ -53,7 +53,14 @@ public final class ChatEmotePicker {
     public void searchChanged(String value){search=value==null?"":value;scroll=0;rowHighlight=-1;paletteStamp="";}
     public void groupNameChanged(String value){groupNameInput=value==null?"":value;}
     ChatOverlayGeometry.Layout geometry(){
-        return ChatOverlayGeometry.forScreen(width,height,form(),form()?-1:rowCount());
+        // Keep the input field steady while typing: shrink short group lists,
+        // but don't resize a popup on every live-search keystroke.
+        int count=-1;
+        if(!form() && (view==View.GROUPS||view==View.MEMBERSHIP))
+            count=preferences.groupNames().size();
+        else if(!form() && mode==3 && view==View.EMOTES)
+            count=preferences.groupSize(group);
+        return ChatOverlayGeometry.forScreen(width,height,form(),count);
     }
     private ChatOverlayGeometry.Rect listRow(int i){
         return geometry().row(i,maxScroll()>0);

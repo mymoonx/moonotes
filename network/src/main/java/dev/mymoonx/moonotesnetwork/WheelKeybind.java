@@ -28,16 +28,26 @@ final class WheelKeybind {
         KeyMapping picker = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, unboundKeyCode(), category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (manager.consumeClick()) {
-                if(client.player!=null&&client.gui.screen()==null)
-                    {client.gui.setScreen(new MoonotesScreen());
-                     MoonotesTelemetry.count(MoonotesTelemetry.Event.MANAGER_OPEN);}
+            // Minecraft 26.3 maps an unbound key to SDL UNKNOWN (code 0).
+            // Never consume an unbound shortcut: the zero-code key can receive
+            // synthetic events when a screen closes or the mouse is captured.
+            // Otherwise the shortcut keeps reopening ChatScreen / Moonotes,
+            // leaving the pointer visible and the camera unable to turn.
+            if (!manager.isUnbound()) {
+                while (manager.consumeClick()) {
+                    if (client.player != null && client.gui.screen() == null) {
+                        client.gui.setScreen(new MoonotesScreen());
+                        MoonotesTelemetry.count(MoonotesTelemetry.Event.MANAGER_OPEN);
+                    }
+                }
             }
-            while (picker.consumeClick()) {
-                if(client.player!=null&&client.gui.screen()==null){
-                    MoonotesTelemetry.count(MoonotesTelemetry.Event.PICKER_OPEN);
-                    ChatPickerShortcut.request();
-                    client.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("",false));
+            if (!picker.isUnbound()) {
+                while (picker.consumeClick()) {
+                    if (client.player != null && client.gui.screen() == null) {
+                        MoonotesTelemetry.count(MoonotesTelemetry.Event.PICKER_OPEN);
+                        ChatPickerShortcut.request();
+                        client.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("", false));
+                    }
                 }
             }
             while (wheel.consumeClick()) {

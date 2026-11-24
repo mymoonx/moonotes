@@ -12,6 +12,7 @@ final class WheelKeybind {
     private static boolean registered;
     private WheelKeybind() {}
     static int unboundKeyCode() { return InputConstants.UNKNOWN.getValue(); }
+    static boolean shouldOpenUnbound(int code) { return code != InputConstants.UNKNOWN.getValue(); }
 
     static void register() {
         if (registered) return;
@@ -33,7 +34,7 @@ final class WheelKeybind {
             // synthetic events when a screen closes or the mouse is captured.
             // Otherwise the shortcut keeps reopening ChatScreen / Moonotes,
             // leaving the pointer visible and the camera unable to turn.
-            if (!manager.isUnbound()) {
+            if (!manager.isUnbound() && shouldOpenUnbound(manager.getKey().getValue())) {
                 while (manager.consumeClick()) {
                     if (client.player != null && client.gui.screen() == null) {
                         client.gui.setScreen(new MoonotesScreen());
@@ -41,7 +42,7 @@ final class WheelKeybind {
                     }
                 }
             }
-            if (!picker.isUnbound()) {
+            if (!picker.isUnbound() && shouldOpenUnbound(picker.getKey().getValue())) {
                 while (picker.consumeClick()) {
                     if (client.player != null && client.gui.screen() == null) {
                         MoonotesTelemetry.count(MoonotesTelemetry.Event.PICKER_OPEN);

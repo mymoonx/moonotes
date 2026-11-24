@@ -38,13 +38,13 @@ final class ChatButtonPlacement {
         int right=which==PICKER?d.pickerRight:d.managerRight;
         int bottom=which==PICKER?d.pickerBottom:d.managerBottom;
         int x=Math.clamp(w-width-right,4,Math.max(4,w-width-4));
-        int y=Math.clamp(h-height-bottom,4,Math.max(4,h-height-5));
+        int y=Math.clamp(h-height-bottom,4,Math.max(4,h-height-18));
         return new ChatOverlayGeometry.Rect(x,y,width,height);
     }
     static void place(Data d,int which,int w,int h,double x,double y){
         int width=which==PICKER?48:84,height=21;
         int bx=Math.clamp((int)Math.round(x),4,Math.max(4,w-width-4));
-        int by=Math.clamp((int)Math.round(y),4,Math.max(4,h-height-5));
+        int by=Math.clamp((int)Math.round(y),4,Math.max(4,h-height-18));
         int right=w-width-bx,bottom=h-height-by;
         if(which==PICKER){d.pickerRight=right;d.pickerBottom=bottom;}
         else{d.managerRight=right;d.managerBottom=bottom;}

@@ -90,6 +90,12 @@ final class LocalBackup {
             }
         }
         if(changes.isEmpty())throw new IOException("Архив не содержит настроек Moonotes");
+        for(String name:changes.keySet()){
+            Path target=config.resolve(name);
+            if(Files.exists(target,LinkOption.NOFOLLOW_LINKS)
+                && !Files.isRegularFile(target,LinkOption.NOFOLLOW_LINKS))
+                throw new IOException("Неверный исходный файл "+name);
+        }
         backup(config); // reversible safety snapshot before applying changes
         int count=0;
         for(var entry:changes.entrySet()){

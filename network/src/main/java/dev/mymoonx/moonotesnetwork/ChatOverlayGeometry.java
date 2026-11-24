@@ -31,7 +31,11 @@ final class ChatOverlayGeometry {
         int top=available<BODY_TOP+ROW+FOOTER?64:BODY_TOP;
         int rows=form?0:Math.max(0,Math.min(7,(available-top-FOOTER)/ROW));
         int h=Math.min(available,form?126:top+rows*ROW+FOOTER);
-        int x=Math.max(4,width-w-8),y=Math.max(4,height-44-h);
+        Rect origin=pickerButton(width,height);
+        int x=Math.clamp(origin.x()+origin.width()-w,4,Math.max(4,width-w-4));
+        int preferredY=origin.y()-h-5;
+        if(preferredY<4)preferredY=origin.y()+origin.height()+5;
+        int y=Math.clamp(preferredY,4,Math.max(4,height-44-h));
         return new Layout(width,height,x,y,w,h,rows,top,form);
     }
     static Rect pickerButton(int width,int height){return ChatButtonPlacement.picker(width,height);}
@@ -39,9 +43,13 @@ final class ChatOverlayGeometry {
     static Rect favoriteAction(Rect row){return new Rect(row.x()+row.width()-47,row.y()+3,19,row.height()-6);}
     static Rect moreAction(Rect row){return new Rect(row.x()+row.width()-23,row.y()+3,19,row.height()-6);}
     static Strip suggestions(int width,int height,int count,int preferredX){
-        int right=pickerButton(width,height).x()-7;
-        int n=Math.max(0,Math.min(Math.min(5,count),(right-5)/CELL));
-        int x=Math.max(5,Math.min(preferredX,right-n*CELL));
+        Rect picker=pickerButton(width,height);
+        int leftSpace=picker.x()-7, rightStart=picker.x()+picker.width()+7;
+        boolean after=leftSpace<CELL+5 && rightStart+CELL<width-5;
+        int n=after
+            ? Math.max(0,Math.min(Math.min(5,count),(width-rightStart-5)/CELL))
+            : Math.max(0,Math.min(Math.min(5,count),(leftSpace-5)/CELL));
+        int x=after?rightStart:Math.max(5,Math.min(preferredX,leftSpace-n*CELL));
         return new Strip(x,Math.max(17,height-43),n);
     }
 }

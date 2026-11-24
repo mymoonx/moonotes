@@ -39,6 +39,9 @@ final class WheelSettings {
     }
     static WheelSettings local(){return Holder.LOCAL;}
 
+    private static volatile String activeGlobalPrefix="!";
+    static String activePrefix(){return activeGlobalPrefix;}
+
     private final Path file;
     private final List<Page> pages=new ArrayList<>();
     private final Map<String,World> worlds=new LinkedHashMap<>();
@@ -63,12 +66,14 @@ final class WheelSettings {
         currentWorld=worldKey;
         World world=worlds.get(worldKey);
         page=world==null?0:Math.clamp(world.page,0,pages.size()-1);
+        activeGlobalPrefix=world==null?"!":world.prefix;
     }
 
     synchronized boolean setPrefix(String value){
         if(!validPrefix(value)){error="Префикс: от 1 до 4 символов ! # @ $ % & * + . ~ -";return false;}
         if(!worlds.containsKey(currentWorld)&&worlds.size()>=MAX_WORLDS){error="Лимит профилей: 128";return false;}
         profile().prefix=value;
+        activeGlobalPrefix=value;
         return save();
     }
     static boolean validPrefix(String value){

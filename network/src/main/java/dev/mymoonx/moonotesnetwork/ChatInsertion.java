@@ -45,16 +45,17 @@ final class ChatInsertion {
             || token.chars().anyMatch(c -> Character.isWhitespace(c) || Character.isISOControl(c)
                 || Character.getType(c) == Character.FORMAT || c == '§'))
             throw new IllegalArgumentException("Некорректное название эмота");
-        return channel.prefix + token;
+        return (channel == WheelSettings.Channel.GLOBAL ? WheelSettings.activePrefix() : "") + token;
     }
 
     static String appendForChannel(String draft, String token, WheelSettings.Channel channel) {
         forChannel(token, channel); // Validate the formatted token before editing a draft.
         String initial = draft == null ? "" : draft;
         // The server uses a single leading exclamation mark to route the whole message.
-        if (initial.startsWith("!")) initial = initial.substring(1);
+        String configured=WheelSettings.activePrefix();
+        if (initial.startsWith(configured)) initial=initial.substring(configured.length());
         if (initial.startsWith("/")) throw new IllegalArgumentException("В черновике команда; сначала завершите её");
-        String result = channel.prefix + appendToken(initial, token);
+        String result = (channel == WheelSettings.Channel.GLOBAL ? configured : "") + appendToken(initial, token);
         if (result.length() > 256) throw new IllegalArgumentException("В черновике недостаточно места");
         return result;
     }

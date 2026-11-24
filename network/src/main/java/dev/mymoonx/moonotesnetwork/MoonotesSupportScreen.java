@@ -29,7 +29,7 @@ final class MoonotesSupportScreen extends Screen {
         panelH=Math.min(306,height-12);
         top=Math.max(6,(height-panelH)/2);
         inner=panelW-24;
-        int x=left+12, tabsY=top+34;
+        int x=left+MoonotesUiMetrics.PANEL_PADDING, tabsY=top+34;
         int tabWidth=Math.max(20,(inner-12)/4);
         for(int i=0;i<4;i++){
             final Section which=Section.values()[i];
@@ -50,7 +50,7 @@ final class MoonotesSupportScreen extends Screen {
         add(left+panelW-96,top+panelH-29,84,"Назад",false,this::onClose);
     }
     private void add(int x,int y,int w,String text,boolean primary,Runnable action){
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,y,Math.max(18,w),22),
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,y,Math.max(18,w),MoonotesUiMetrics.ACTION_HEIGHT),
             text,text,primary,b->action.run()));
     }
     private void paired(int x,int y,String a,Runnable fa,String b,Runnable fb){

@@ -89,9 +89,9 @@ final class WheelEditorScreen extends Screen {
         visibleRows = Math.max(1, (listBottom - listTop) / ROW_HEIGHT);
         listBottom = listTop + visibleRows * ROW_HEIGHT;
         int actionWidth=Math.max(40,(contentWidth-6)/2);
-        button(left,height-29,actionWidth,22,"Отмена",
+        button(left,height-(MoonotesUiMetrics.ACTION_HEIGHT+7),actionWidth,MoonotesUiMetrics.ACTION_HEIGHT,"Отмена",
             "Закрыть без сохранения изменений слотов.",false,b -> onClose());
-        button(left+actionWidth+6,height-29,contentWidth-actionWidth-6,22,
+        button(left+actionWidth+6,height-(MoonotesUiMetrics.ACTION_HEIGHT+7),contentWidth-actionWidth-6,MoonotesUiMetrics.ACTION_HEIGHT,
             "Сохранить","Сохранить выбранные эмоты.",true,b -> {
                 if(settings.pageGroup().isEmpty() && settings.saveSlots(draft))
                     minecraft.gui.setScreen(parent);

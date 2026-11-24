@@ -2,7 +2,7 @@ package dev.mymoonx.moonotesnetwork;
 
 /** Scaled coordinates shared by rendering, mouse dispatch and layout checks. */
 final class ChatOverlayGeometry {
-    static final int ROW=24, BODY_TOP=78, FOOTER=30, CELL=28;
+    static final int ROW=24, BODY_TOP=78, FOOTER=MoonotesUiMetrics.ACTION_HEIGHT+MoonotesUiMetrics.FOOTER_PADDING, CELL=28;
     record Rect(int x,int y,int width,int height) {
         boolean contains(double px,double py){return px>=x&&py>=y&&px<x+width&&py<y+height;}
     }
@@ -10,7 +10,7 @@ final class ChatOverlayGeometry {
         Rect bounds(){return new Rect(x,y,width,height);}
         Rect row(int index){return row(index,false);}
         Rect row(int index,boolean scrollbar){
-            return new Rect(x+8,y+bodyTop+index*ROW,width-16-(scrollbar?10:0),ROW-2);
+            return new Rect(x+8,y+bodyTop+index*ROW,width-16-(scrollbar?MoonotesUiMetrics.SCROLLBAR_WIDTH+6:0),ROW-2);
         }
         int footerY(){return y+height-FOOTER;}
         Rect input(){return new Rect(x+8,y+(form?43:bodyTop-22),width-16,18);}

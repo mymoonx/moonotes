@@ -127,6 +127,7 @@ final class WheelEditorScreen extends Screen {
         row = Math.clamp(row, 0, grid().maxRow());
         candidate = Math.clamp(candidate, -1, results.size() - 1);
         lastHovered = -1;
+        if (previews != null) previews.closeModal();
     }
 
     private boolean pageReady(){
@@ -178,6 +179,8 @@ final class WheelEditorScreen extends Screen {
     }
     private void toggle(Overlay which){
         overlay=overlay==which?Overlay.NONE:which;
+        lastHovered=-1;
+        if(previews!=null)previews.closeModal();
         popupScroll=0;showRename(overlay==Overlay.RENAME);
         if(overlay!=Overlay.RENAME)clearFocus();
     }
@@ -331,7 +334,12 @@ final class WheelEditorScreen extends Screen {
 
         WheelGridGeometry grid = grid();
         int hovered = itemAt(mx, my);
-        if (hovered != lastHovered) { lastHovered = hovered; hoverSince = System.nanoTime(); }
+        if (hovered != lastHovered) {
+            lastHovered = hovered;
+            hoverSince = System.nanoTime();
+            // One detailed animation at a time; release textures on hover change.
+            previews.closeModal();
+        }
         g.fill(left, listTop, left + contentWidth, listBottom, 0xFF142236);
         int cardWidth = grid.cardWidth();
         for (int visible = 0; visible < visibleRows; visible++) {
@@ -383,9 +391,45 @@ final class WheelEditorScreen extends Screen {
                 x + 3, slotsY + 2, 0xFFBBCDE0, false);
         }
         popupDraw(g,mx,my);
-        if (hovered >= 0 && overlay==Overlay.NONE && System.nanoTime() - hoverSince >= 500_000_000L)
-            g.setTooltipForNextFrame(font, font.split(Component.literal(results.get(hovered).name()
-                + "\nНажать — назначить в слот " + (selected + 1)), Math.min(300, contentWidth)), mx, my);
+        if (hovered >= 0 && overlay == Overlay.NONE && !draggingThumb
+                && System.nanoTime() - hoverSince >= 450_000_000L)
+            drawHoverPreview(g, grid, hovered);
+    }
+
+    /**
+     * Detailed hover-only preview reuses the same bounded, asynchronous animation
+     * decoder as the library viewer. List cells remain lightweight static thumbs.
+     */
+    private void drawHoverPreview(GuiGraphicsExtractor g, WheelGridGeometry grid, int index) {
+        int visibleRow = index / columns - row;
+        if (visibleRow < 0 || visibleRow >= visibleRows) return;
+        ChatPalette.Emote emote = results.get(index);
+        int imageSize = Math.min(108, Math.max(48, height - 150));
+        int popupWidth = Math.min(190, width - 20);
+        int popupHeight = imageSize + 64;
+        var position = WheelPreviewPosition.place(width, height,
+            grid.cardX(index % columns), grid.cardY(visibleRow), grid.cardWidth(),
+            ROW_HEIGHT - 4, popupWidth, popupHeight, MoonotesUiMetrics.ACTION_HEIGHT + 10);
+        int x = position.x(), y = position.y();
+        int px = x + (popupWidth - imageSize) / 2, py = y + 25;
+
+        g.nextStratum();
+        g.fill(x + 2, y + 3, x + popupWidth + 2, y + popupHeight + 3, 0x72000000);
+        g.fill(x, y, x + popupWidth, y + popupHeight, 0xFC192A40);
+        g.outline(x, y, popupWidth, popupHeight, 0xFF8BAFD4);
+        g.text(font, Component.literal(fit(emote.name(), popupWidth - 20)),
+            x + 10, y + 8, 0xFFF4F8FF, false);
+        g.fill(px - 3, py - 3, px + imageSize + 3, py + imageSize + 3, 0xFF101D2D);
+
+        int frames = previews.drawDetailed(g, emote.id(), px, py, imageSize);
+        if (frames == 0) previews.draw(g, emote.id(), px, py, imageSize);
+        String detail = frames > 1 ? "Анимация · " + frames + " кадров"
+            : frames == 1 ? "Статичный эмот"
+            : previews.detailUnavailable() ? "Превью недоступно" : "Подготовка превью…";
+        g.centeredText(font, Component.literal(fit(detail, popupWidth - 16)),
+            x + popupWidth / 2, py + imageSize + 6, 0xFFA9C9E6);
+        g.centeredText(font, Component.literal(fit(emote.channel(), popupWidth - 16)),
+            x + popupWidth / 2, py + imageSize + 19, 0xFF8FA9C4);
     }
 
     @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {

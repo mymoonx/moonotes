@@ -31,8 +31,8 @@ public final class MoonotesScreen extends Screen {
     private int tab, sortMode, filterMode, keyboardPosition = -1;
     private final Screen parent;
     private int settingsSection;
-    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20}};
+    private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
+    private static final int[][] SETTING_OPTIONS={{8,9,3,4},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -245,6 +245,8 @@ public final class MoonotesScreen extends Screen {
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
                     case 15,16,17,18,19,20 -> ExtrasSettings.local().cycle(option);
+                    case 21 -> {minecraft.gui.setScreen(new ChatButtonsScreen(this));return;}
+                    case 22 -> {minecraft.gui.setScreen(new MoonotesSupportScreen(this));return;}
                     default -> {MoonotesNetworkClient.toggleLocalDiagnostics();
                         if(!MoonotesNetworkClient.localDiagnostics()){observedMouseClicks=0;observedMouseDrags=0;}}
                 }
@@ -279,6 +281,8 @@ public final class MoonotesScreen extends Screen {
             case 18 -> "Эмоты на табличках";
             case 19 -> "Эмоты в книгах";
             case 20 -> "Эмоты в названиях предметов";
+            case 21 -> "Кнопки и префикс чата";
+            case 22 -> "Диагностика и поддержка";
             default -> "Расположение HUD";
         };
     }
@@ -299,6 +303,8 @@ public final class MoonotesScreen extends Screen {
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
             case 15,16,17,18,19,20 -> ExtrasSettings.local().value(option);
+            case 21 -> "Настроить кнопки и чат…";
+            case 22 -> "Открыть центр поддержки…";
             default -> "Настроить расположение…";
         };
     }
@@ -325,6 +331,8 @@ public final class MoonotesScreen extends Screen {
             case 18 -> "Эмоты активных каталогов рисуются отдельными изображениями на обычных и подвесных табличках. До загрузки картинки видно имя. Исходный текст сохраняется.";
             case 19 -> "Эмоты активных каталогов в готовых книгах, на кафедрах и в редакторе. Изображение занимает место имени; курсор, ссылки и сохранение текста работают как обычно.";
             case 20 -> "Показывать известные эмоты в названиях предметов. Никакие данные предметов не изменяются.";
+            case 21 -> "Перетащить кнопки в открытом чате, выбрать префикс глобального чата для сервера. Горячие клавиши меняются в Настройки Minecraft → Управление → Moonotes.";
+            case 22 -> "Самопроверка, безопасный отчёт, резервное копирование, режим качества и ручная проверка новых версий. Никакой автоматической отправки логов.";
             default -> "Открыть предпросмотр и перетащить HUD в удобное место. Положение сохраняется после нажатия «Сохранить».";
         };
     }

@@ -23,6 +23,7 @@ final class WheelEditorScreen extends Screen {
     private List<ChatPalette.Emote> source = List.of(), results = List.of();
     private final Map<String, ChatPalette.Emote> indexed = new HashMap<>();
     private final MoonotesButton[] slots = new MoonotesButton[WheelSettings.SLOTS];
+    private MoonotesButton pageButton;
     private EmotePreviews previews;
     private EditBox search, pageName;
     private enum Overlay { NONE, PAGES, ACTIONS, GROUPS, RENAME }
@@ -66,7 +67,7 @@ final class WheelEditorScreen extends Screen {
         button(left+28, detailsY, 23, 20, "→",
             "Поменять выбранный слот местами со следующим.", false, b -> move(1));
         int chooserWidth=Math.max(60,contentWidth-100);
-        button(left+58,detailsY,chooserWidth,20,"",
+        pageButton=button(left+58,detailsY,chooserWidth,20,pageLabel(),
             "Выбрать страницу колеса или создать новую.",false,b -> toggle(Overlay.PAGES));
         button(left+contentWidth-36,detailsY,36,20,"⋯",
             "Дополнительные действия: группа, название, очистка или удаление.",
@@ -144,11 +145,15 @@ final class WheelEditorScreen extends Screen {
     private void refreshPage(){
         draft=settings.slots();selected=0;candidate=-1;
         if(pageName!=null)pageName.setValue(settings.pageTitle());
+        if(pageButton!=null)pageButton.setMessage(Component.literal(pageLabel()));
         overlay=Overlay.NONE;popupScroll=0;showRename(false);
         status="Страница "+(settings.page()+1)+" из "+settings.pageCount();
         clearFocus();
     }
 
+    private String pageLabel(){
+        return settings.pageTitle()+" · "+(settings.page()+1)+"/"+settings.pageCount();
+    }
     private int popupWidth(){return Math.min(240,Math.max(125,contentWidth-10));}
     private int popupX(){return left+contentWidth-popupWidth();}
     private int popupY(){return detailsY+24;}
@@ -314,17 +319,14 @@ final class WheelEditorScreen extends Screen {
         if (revision != ChatPalette.revision()) refreshSource();
         g.fill(0, 0, width, height, 0xF0111C2C);
         g.centeredText(font,Component.literal("Настройка колеса"),width/2,8,0xFFF0F5FC);
-        String hint = status.isBlank()
-            ? (settings.pageGroup().isEmpty() ? "Выбери слот и эмот из сетки" :
-                "Связь с группой: "+settings.pageGroup()+" — меняй состав в мини-библиотеке")
+        String hint=status.isBlank()
+            ? settings.pageGroup().isEmpty()
+                ? "Слот "+(selected+1)+" · "+slotName(selected)+" — выбери эмот ниже"
+                : "Страница связана с группой «"+settings.pageGroup()+"»"
             : status;
         g.centeredText(font, fit(hint, contentWidth), width / 2, 23,
             status.isBlank() ? 0xFFA6BDD5 : 0xFFFFC596);
-        g.text(font,Component.literal(fit("Слот "+(selected+1)+": "+slotName(selected),
-            contentWidth-150)),left+8,slotsY+slotWidth+1,0xFFDDEAF6,false);
-        String pageText=settings.pageTitle()+"   "+(settings.page()+1)+"/"+settings.pageCount();
-        g.text(font,Component.literal(fit(pageText,Math.max(30,contentWidth-112))),
-            left+65,detailsY+6,0xFFF0F5FD,false);
+
 
         WheelGridGeometry grid = grid();
         int hovered = itemAt(mx, my);

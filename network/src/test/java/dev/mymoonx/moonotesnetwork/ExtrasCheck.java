@@ -81,6 +81,12 @@ public final class ExtrasCheck {
         require(!LocalReactions.valid("/tp"), "no commands in reaction");
         require(!LocalReactions.valid("bad name"), "no whitespace");
         require(!LocalReactions.valid("x".repeat(81)), "bounded label");
+        require(LocalReactions.accepts(true, 5_000, 1_000),
+                "manual right-click immediately replaces an existing reaction");
+        require(!LocalReactions.accepts(false, 5_000, 1_000),
+                "chat reactions remain flood limited");
+        require(LocalReactions.accepts(false, 5_000, 3_800),
+                "chat reaction may refresh when cooldown ends");
 
         Component colored = Component.literal("DoNotTouch").withStyle(s ->
             s.withClickEvent(new ClickEvent.CopyToClipboard("other")));

@@ -131,6 +131,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         volatile boolean autoCatalogSync = true;
         volatile boolean serverProfiles = true;
         volatile boolean chatSuggestions = true;
+        volatile boolean chatSuggestionArrows = false; // opt-in; never steal caret navigation by default
         volatile boolean chatPicker = true;
         volatile boolean hudProgress = true;
         volatile int hudCorner = 1; // 0 left top, 1 right top, 2 left bottom, 3 right bottom
@@ -657,6 +658,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     }
     static boolean chatSuggestionsEnabled() { return config.chatSuggestions && config.enabled; }
     static void toggleChatSuggestions() { config.chatSuggestions = !config.chatSuggestions; saveConfig(); }
+    static boolean chatSuggestionArrows() { return config.chatSuggestionArrows; }
+    static void toggleChatSuggestionArrows() { config.chatSuggestionArrows = !config.chatSuggestionArrows; saveConfig(); }
     static boolean chatPickerEnabled() { return config.chatPicker && config.enabled; }
     static void toggleChatPicker() { config.chatPicker = !config.chatPicker; saveConfig(); }
     static String notificationMode(){return NotificationQueue.mode(config.noticeMode);}
@@ -683,8 +686,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     public static void notifyAddon(String title,String message,boolean error){
         MoonotesNotifications.notifyUser(title,message,error);
     }
-    static boolean releaseNotesPending() { return !"0.5.3".equals(config.releaseShownVersion); }
-    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.5.3"; saveConfig(); }
+    static boolean releaseNotesPending() { return !"0.6.0-rc.1".equals(config.releaseShownVersion); }
+    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.6.0-rc.1"; saveConfig(); }
 
     static boolean retryDownloads() { return config.retryDownloads; }
     static void toggleRetryDownloads() { config.retryDownloads = !config.retryDownloads; saveConfig(); }

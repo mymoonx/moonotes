@@ -373,7 +373,7 @@ public final class ChatEmotePicker {
         }
         if(key.key()==InputConstants.KEY_TAB)ignoredPrefix="";
         var options=suggestions(input,searchFocused);int count=strip(input,options.size()).count();
-        var action=selection.key(key,count);
+        var action=selection.key(key,count,MoonotesNetworkClient.chatSuggestionArrows());
         if(action==ChatSuggestionSelection.Action.DISMISS){ignoredPrefix=lastPrefix;return true;}
         if(action==ChatSuggestionSelection.Action.MOVE)return true;
         if(action==ChatSuggestionSelection.Action.COMMIT){insert(input,options.get(selection.index()),true);selection.afterCommit();return true;}

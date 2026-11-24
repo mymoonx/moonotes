@@ -32,7 +32,7 @@ public final class MoonotesScreen extends Screen {
     private final Screen parent;
     private int settingsSection;
     private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
-    private static final int[][] SETTING_OPTIONS={{8,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
+    private static final int[][] SETTING_OPTIONS={{8,24,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -239,6 +239,7 @@ public final class MoonotesScreen extends Screen {
                     case 6 -> MoonotesNetworkClient.toggleAutoCatalogSync();
                     case 7 -> MoonotesNetworkClient.toggleServerProfiles();
                     case 8 -> MoonotesNetworkClient.toggleChatSuggestions();
+                    case 24 -> MoonotesNetworkClient.toggleChatSuggestionArrows();
                     case 9 -> MoonotesNetworkClient.toggleChatPicker();
                     case 10 -> MoonotesNetworkClient.cycleNotificationMode();
                     case 11 -> MoonotesNetworkClient.toggleHudProgress();
@@ -257,7 +258,7 @@ public final class MoonotesScreen extends Screen {
         }
         reportButton=button(layout.footer(0,4),"Отчёт","Локальная диагностика: версии, счётчики и категории ошибок. Отправки данных нет.",false,b->openReport());
         button(layout.footer(1,4),"Кеш","Проверка изображений и анимации, восстановление отсутствующих файлов.",false,b->{cacheOpen=true;rebuildMoonotesWidgets();});
-        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0-beta.4. Доступны без интернета.",false,b->openReleaseNotes());
+        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0-rc.1. Доступны без интернета.",false,b->openReleaseNotes());
         button(layout.footer(3,4),"События","Недавние сообщения Moonotes, в том числе при выключенных уведомлениях.",false,b->openEventLog());
     }
 
@@ -272,6 +273,7 @@ public final class MoonotesScreen extends Screen {
             case 6 -> "Обновление каталогов";
             case 7 -> "Профили серверов";
             case 8 -> "Подсказки в чате";
+            case 24 -> "Выбор эмотов стрелками";
             case 9 -> "Мини-библиотека";
             case 10 -> "Уведомления";
             case 11 -> "Фоновая загрузка на экране";
@@ -300,6 +302,7 @@ public final class MoonotesScreen extends Screen {
             case 6 -> onOff(MoonotesNetworkClient.autoCatalogSync());
             case 7 -> onOff(MoonotesNetworkClient.serverProfilesEnabled());
             case 8 -> onOff(MoonotesNetworkClient.chatSuggestionsEnabled());
+            case 24 -> onOff(MoonotesNetworkClient.chatSuggestionArrows());
             case 9 -> onOff(MoonotesNetworkClient.chatPickerEnabled());
             case 10 -> MoonotesNetworkClient.notificationModeLabel();
             case 11 -> onOff(MoonotesNetworkClient.hudProgressEnabled());
@@ -323,7 +326,8 @@ public final class MoonotesScreen extends Screen {
             case 5 -> "Локальные счётчики и безопасные категории ошибок для поиска неполадок.\nВ отчёт не включаются ник, IP, чат, адрес сервера и пути к файлам.\nНичего автоматически не отправляется. Выключение очищает счётчики.";
             case 6 -> "Раз в сутки проверять изменения каталога. Новые эмоты только в списке: изображения не скачиваются без согласия.";
             case 7 -> "При входе на сервер восстановить выбранный каталог библиотеки. Адрес сервера сохраняется в локальном профиле только как хеш.";
-            case 8 -> "Компактная лента подходящих эмотов. Tab и стрелки выбирают, пробел вставляет выбранный эмот. Пока выбор не активирован, пробел работает как обычно. Esc скрывает подсказки. /Команды не меняются.";
+            case 8 -> "Компактная лента подходящих эмотов. Tab и Shift+Tab выбирают, пробел вставляет выбранный эмот. Стрелки по умолчанию редактируют строку как обычно. Esc скрывает подсказки. /Команды не меняются.";
+            case 24 -> "Необязательное управление подсказками стрелками ↑ ↓ ← →. По умолчанию выключено, чтобы стрелки в чате передвигали курсор и открывали историю сообщений. Tab и Shift+Tab работают независимо.";
             case 9 -> "Кнопка «Эмоты» рядом со строкой чата открывает избранное, недавние, группы и поиск. Звезда меняет избранное; меню эмота управляет группами. Вставка добавляет текст в чат без отправки.";
             case 10 -> "Всплывающие, только ошибки, сообщения в чате или без уведомлений. Последние события остаются в журнале. Для основного Moonotes общий режим поддерживается с версии 0.4.1.";
             case 11 -> "Во время фоновой загрузки показывать небольшую шкалу в HUD. Скрывается автоматически и клавишей F1.";
@@ -665,7 +669,17 @@ public final class MoonotesScreen extends Screen {
         releaseNotesOpen=true;eventsOpen=false;
         reportOpen=true;reportScroll.row=0;reportScroll.release();
         report=String.join("\n",
-            "Moonotes Network 0.6.0-beta.4 — удобный интерфейс и безопасные обновления",
+            "Moonotes Network 0.6.0-rc.1 — удобный чат и реакции",
+            "",
+            "НОВОЕ В RC.1",
+            "• Стрелки не выбирают эмоты во время набора сообщения: курсор и история чата работают как обычно.",
+            "• Tab и Shift+Tab продолжают выбирать подсказку. Стрелки можно вручную включить в «Настройки → Чат».",
+            "• ПКМ по эмоту обновляет свою локальную реакцию даже при быстром повторении.",
+            "• Если картинка реакции не готова, отображается имя или заглушка; в первом лице панель заметнее.",
+            "• Реакции ПКМ локальные: они не рассылаются другим игрокам без сетевой поддержки.",
+            "",
+            "РАНЕЕ В BETA.5 И BETA.4",
+            "• Исправлены дубли названия страницы, улучшен редактор, добавлен крупный анимированный предпросмотр эмотов.",
             "",
             "ИНТЕРФЕЙС",
             "• Страницы колеса показаны внутри кольца. Редактор использует выбор страницы и меню дополнительных действий.",
@@ -753,7 +767,7 @@ public final class MoonotesScreen extends Screen {
         g.fill(box.x()-1,box.y()-1,box.right()+1,box.bottom()+1,0xFF6C8EB9);
         g.fill(box.x(),box.y(),box.right(),box.bottom(),0xFF1C2C43);
         g.fill(box.x(),box.y(),box.right(),box.y()+25,0xFF2A405E);
-        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в 0.5.3":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
+        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в rc.1":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
         text(g,modalTitle,box.x()+12,box.y()+9,TEXT);
         if(catalogPreviewOpen){drawCatalogPreview(g,box);return;}
         if(catalogFormOpen){drawCatalogForm(g,box);return;}

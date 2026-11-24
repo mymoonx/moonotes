@@ -21,25 +21,39 @@ final class LocalReactions {
             && name.matches("[^\\s\\p{Cntrl}\\p{Cf}§/]{2,80}");
     }
 
-    static void show(ChatPalette.Emote emote) {
+    /** Returns whether the action produced an actual local reaction, not merely a click. */
+    static boolean show(ChatPalette.Emote emote) {
         Minecraft mc = Minecraft.getInstance();
-        if (emote == null || mc.player == null || !ExtrasSettings.local().reactions()) return;
-        showFor(mc.player.getUUID(), emote);
+        if (emote == null || mc.player == null || !ExtrasSettings.local().reactions()) return false;
+        if (!showFor(mc.player.getUUID(), emote, true)) return false;
         MoonotesTelemetry.count(MoonotesTelemetry.Event.LOCAL_REACTION);
         LibraryPreferences.local().used(emote.key());
+        return true;
     }
 
-    static void showFor(UUID player, ChatPalette.Emote emote) {
+    static boolean showFor(UUID player, ChatPalette.Emote emote) {
+        return showFor(player, emote, false);
+    }
+
+    private static boolean showFor(UUID player, ChatPalette.Emote emote, boolean manual) {
         if (player == null || emote == null || !valid(emote.name())
                 || emote.id() == null || !emote.id().matches("[a-zA-Z0-9]{16,40}")
-                || !ExtrasSettings.local().reactions()) return;
+                || !ExtrasSettings.local().reactions()) return false;
         long now = System.currentTimeMillis();
         Visual previous = ACTIVE.get(player);
-        if (previous != null && now < previous.until() - 1200) return; // avoid chat floods
+        // A deliberate right-click should always replace/refresh your reaction.
+        // Incoming chat still has a cooldown to prevent a flood of billboards.
+        if (!accepts(manual, previous == null ? 0 : previous.until(), now)) return false;
         if (ACTIVE.size() >= MAX) ACTIVE.entrySet().removeIf(e -> e.getValue().until() <= now);
-        if (ACTIVE.size() >= MAX) return;
+        if (ACTIVE.size() >= MAX && previous == null) return false;
         ACTIVE.put(player, new Visual(player, emote.name(), emote.id(),
             now + ExtrasSettings.local().reactionSeconds() * 1000L));
+        return true;
+    }
+
+    /** Pure timing policy for repeat clicks vs incoming chat spam. */
+    static boolean accepts(boolean manual, long previousUntil, long now) {
+        return manual || previousUntil == 0 || now >= previousUntil - 1200;
     }
 
     static List<Visual> active(long now) {

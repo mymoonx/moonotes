@@ -686,8 +686,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     public static void notifyAddon(String title,String message,boolean error){
         MoonotesNotifications.notifyUser(title,message,error);
     }
-    static boolean releaseNotesPending() { return !"0.5.3".equals(config.releaseShownVersion); }
-    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.5.3"; saveConfig(); }
+    static boolean releaseNotesPending() { return !"0.6.0-rc.1".equals(config.releaseShownVersion); }
+    static void markReleaseNotesSeen() { config.releaseShownVersion = "0.6.0-rc.1"; saveConfig(); }
 
     static boolean retryDownloads() { return config.retryDownloads; }
     static void toggleRetryDownloads() { config.retryDownloads = !config.retryDownloads; saveConfig(); }

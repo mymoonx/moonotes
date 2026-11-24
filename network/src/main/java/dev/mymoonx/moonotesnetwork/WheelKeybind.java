@@ -19,11 +19,13 @@ final class WheelKeybind {
             Identifier.fromNamespaceAndPath("moonotes_network", "gameplay"));
         KeyMapping wheel = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.moonotes_network.wheel", InputConstants.Type.KEYBOARD, InputConstants.KEY_G, category));
-        // Unbound by default to avoid conflicting with existing Minecraft/mod keys.
+        // SDL (Minecraft 26.3) uses key 0 for "Not Bound". The old GLFW -1
+        // crashes KeyMapping.setAll() on entering a world because it indexes
+        // the SDL key-state buffer at -1. Use the vanilla sentinel instead.
         KeyMapping manager = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.moonotes_network.manager", InputConstants.Type.KEYBOARD, -1, category));
+            "key.moonotes_network.manager", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), category));
         KeyMapping picker = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, -1, category));
+            "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (manager.consumeClick()) {
                 if(client.player!=null&&client.gui.screen()==null)

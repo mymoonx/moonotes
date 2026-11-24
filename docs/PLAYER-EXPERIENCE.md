@@ -1,10 +1,12 @@
-# Moonotes Network 0.6.0-beta.1 — удобство и поддержка
+# Moonotes Network 0.6.0-beta.2 — удобство и поддержка
+
+**Исправление beta.2:** запуск Minecraft больше не использует старый GLFW-код `-1` для неназначенных клавиш. В Minecraft 26.3/SDL нужен `InputConstants.UNKNOWN.getValue()` (код 0); неправильное значение приводило к `IndexOutOfBoundsException` при выходе из экрана загрузки мира.
 
 **Статус:** тестовая версия на базе проверенной 0.6.0-alpha.4. **Не публиковать как Latest до повторного тестирования в Minecraft 26.3.**
 
 ## Установка
 
-Minecraft Java 26.3, Fabric Loader 0.20.1+, совместимый Fabric API, Java 25, оригинальный Streamotes 1.2.16+26.3, основной `moonotes-0.4.1.jar` и **ровно один** `moonotes-network-0.6.0-beta.1.jar` в папке `mods`.
+Minecraft Java 26.3, Fabric Loader 0.20.1+, совместимый Fabric API, Java 25, оригинальный Streamotes 1.2.16+26.3, основной `moonotes-0.4.1.jar` и **ровно один** `moonotes-network-0.6.0-beta.2.jar` в папке `mods`.
 
 Все файлы `config/moonotes-*.json`, группы, избранное и кеш сохраняются. Старое `moonotes-wheel.json` с восемью слотами автоматически читается как первая страница. Отдельной команды миграции не требуется.
 

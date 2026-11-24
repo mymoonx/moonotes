@@ -10,10 +10,10 @@ public final class UnboundKeysCheck {
         ByteBuffer keys=ByteBuffer.allocateDirect(512);
         keys.get(unbound); // Would throw IndexOutOfBoundsException for the old -1.
         // An unbound shortcut must NEVER be dispatched as a screen-opening action.
-        if (WheelKeybind.shouldOpenUnbound(unbound))
-            throw new AssertionError("Default shortcut must not open chat or manager");
-        if (!WheelKeybind.shouldOpenUnbound(com.mojang.blaze3d.platform.InputConstants.KEY_G))
-            throw new AssertionError("An assigned key can be handled");
+        if (WheelKeybind.canDispatch(true))
+            throw new AssertionError("Unbound shortcut must never open a GUI screen");
+        if (!WheelKeybind.canDispatch(false))
+            throw new AssertionError("Explicitly assigned shortcut must be dispatchable");
         System.out.println("UnboundKeysCheck: PASS (SDL key index "+unbound+")");
     }
 }

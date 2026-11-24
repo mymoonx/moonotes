@@ -44,26 +44,19 @@ final class EmoteWheelScreen extends Screen {
         choices = settings.resolve(available);
         layout = WheelLayout.of(width, height);
         ring = WheelGeometry.spans(layout.inner(), layout.outer());
-        int cw = Math.min(width - 16, 435), x = (width - cw)/2;
-        int arrow = 24, gap = 5, nameW = Math.max(40,(cw - 4*gap - 2*arrow) / 4);
-        int editW = Math.min(94, Math.max(62, cw/5));
-        int chatW = cw - 2*arrow - nameW - editW - 4*gap;
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,10,arrow,22),
-            "◀","Предыдущая страница",false,b -> changePage(-1)));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+arrow+gap,10,arrow,22),
-            "▶","Следующая страница",false,b -> changePage(1)));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+2*(arrow+gap),10,nameW,22),
-            pageLabel(),"Страница "+settings.pageTitle()+". Колёсико мыши на кольце переключает страницы.",
-            false,b -> changePage(1)));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+2*arrow+nameW+3*gap,10,chatW,22),
-            channelLabel(),"Выберите чат для ЛКМ и черновика. Глобальный префикс настраивается отдельно.",
+        // Keep the actual ring uncluttered: page name/count lives inside its center.
+        int controlWidth=Math.min(width-24,290), x=(width-controlWidth)/2;
+        int channelWidth=Math.max(80,controlWidth-100);
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,10,channelWidth,22),
+            channelLabel(),"ЛКМ — отправить в выбранный чат; префикс задаётся в настройках Moonotes.",
             false,b -> {
                 settings.setChannel(settings.channel()==WheelSettings.Channel.LOCAL
-                    ? WheelSettings.Channel.GLOBAL : WheelSettings.Channel.LOCAL);
+                    ? WheelSettings.Channel.GLOBAL:WheelSettings.Channel.LOCAL);
                 b.setMessage(Component.literal(channelLabel()));clearFocus();
             }));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+2*arrow+nameW+chatW+4*gap,10,editW,22),
-            "Настроить","Страницы, группа и восемь слотов.",false,
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+channelWidth+6,10,
+            controlWidth-channelWidth-6,22),"⚙ Настроить",
+            "Восемь слотов, список страниц и привязка групп.",false,
             b -> minecraft.gui.setScreen(new WheelEditorScreen(this))));
     }
 
@@ -76,7 +69,8 @@ final class EmoteWheelScreen extends Screen {
         settings.stepPage(direction);
         choices=settings.resolve(ChatPalette.snapshot());
         // Update selector and page title without recreating previews.
-        if(minecraft!=null) minecraft.gui.setScreen(new EmoteWheelScreen());
+        // Page change does not reopen the Screen or lose previews/mouse state.
+        status="";statusUntil=0;
     }
 
     @Override public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
@@ -109,11 +103,18 @@ final class EmoteWheelScreen extends Screen {
         List<net.minecraft.util.FormattedCharSequence> nameLines =
             font.split(Component.literal(name), centerWidth);
         int maxLines = Math.min(3, nameLines.size());
-        int firstY = cy - maxLines * 11 / 2;
+        int firstY = cy - maxLines * 11 / 2 - 7;
         for (int i = 0; i < maxLines; i++) {
             var line = nameLines.get(i);
             g.text(font, line, cx - font.width(line) / 2, firstY + i * 11,
                 0xFFF2F6FC, false);
+        }
+        // Compact page indicator is integrated with the ring, hidden for one page.
+        if(settings.pageCount()>1){
+            String indicator=settings.pageTitle()+"  ·  "+(settings.page()+1)+"/"+settings.pageCount();
+            g.centeredText(font,Component.literal(font.plainSubstrByWidth(
+                indicator,Math.max(54,layout.inner()*2-18))),cx,
+                cy+Math.max(13,layout.inner()/2),0xFFA5C5E4);
         }
         // Action hints are immediately below the ring in their own translucent
         // panel; never placed over the health bar or hotbar.
@@ -132,7 +133,7 @@ final class EmoteWheelScreen extends Screen {
         if(layout!=null && vertical!=0) {
             double dx=x-layout.centerX(), dy=y-layout.centerY();
             if(dx*dx+dy*dy<=layout.outer()*layout.outer()) {
-                changePage(vertical>0?-1:1);
+                if(settings.pageCount()>1)changePage(vertical>0?-1:1);
                 return true;
             }
         }

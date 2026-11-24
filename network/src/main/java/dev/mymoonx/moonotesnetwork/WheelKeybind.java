@@ -11,6 +11,7 @@ import net.minecraft.resources.Identifier;
 final class WheelKeybind {
     private static boolean registered;
     private WheelKeybind() {}
+    static int unboundKeyCode() { return InputConstants.UNKNOWN.getValue(); }
 
     static void register() {
         if (registered) return;
@@ -23,9 +24,9 @@ final class WheelKeybind {
         // crashes KeyMapping.setAll() on entering a world because it indexes
         // the SDL key-state buffer at -1. Use the vanilla sentinel instead.
         KeyMapping manager = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.moonotes_network.manager", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), category));
+            "key.moonotes_network.manager", InputConstants.Type.KEYBOARD, unboundKeyCode(), category));
         KeyMapping picker = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), category));
+            "key.moonotes_network.picker", InputConstants.Type.KEYBOARD, unboundKeyCode(), category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (manager.consumeClick()) {
                 if(client.player!=null&&client.gui.screen()==null)

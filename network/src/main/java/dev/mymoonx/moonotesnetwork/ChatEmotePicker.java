@@ -52,7 +52,7 @@ public final class ChatEmotePicker {
     public int searchWidth(){return geometry().input().width();}
     public void searchChanged(String value){search=value==null?"":value;scroll=0;rowHighlight=-1;paletteStamp="";}
     public void groupNameChanged(String value){groupNameInput=value==null?"":value;}
-    private ChatOverlayGeometry.Layout geometry(){
+    ChatOverlayGeometry.Layout geometry(){
         return ChatOverlayGeometry.forScreen(width,height,form(),form()?-1:rowCount());
     }
     private ChatOverlayGeometry.Rect listRow(int i){

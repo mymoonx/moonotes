@@ -62,8 +62,11 @@ final class LocalReactionOverlay {
         float partial = delta.getGameTimeDeltaPartialTick(false);
         int width = g.guiWidth(), height = g.guiHeight();
         int rendered = 0;
+        int maxReactions=switch(SupportPreferences.local().performance()){
+            case ECONOMY -> 4; case HIGH -> 12; default -> 8;
+        };
         for (LocalReactions.Visual visual : active) {
-            if (rendered >= 12) break; // bounded even in crowded servers
+            if (rendered >= maxReactions) break; // bounded even in crowded servers
             Player player = mc.level.getPlayerByUUID(visual.player());
             if (player == null || player.isInvisible()) continue;
             boolean firstPersonSelf = player == mc.player && camera.entity() == mc.player

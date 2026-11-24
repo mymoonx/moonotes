@@ -52,6 +52,8 @@ final class MoonotesSupportScreen extends Screen {
         });
         add(x,top+104,(inner-8)/2,"Режим качества: "+settings.performance().label,()->{
             settings.cyclePerformance();
+            SignEmoteRenderer.reset();
+            BookEmoteRenderer.disconnect();
             if(minecraft!=null)minecraft.gui.setScreen(new MoonotesSupportScreen(parent));
         });
         add(x+inner/2+4,top+104,(inner-8)/2,"Проверить обновления",()->{

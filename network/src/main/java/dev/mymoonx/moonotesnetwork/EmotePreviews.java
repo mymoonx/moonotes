@@ -43,6 +43,21 @@ final class EmotePreviews implements AutoCloseable {
     private static final int WORLD_GPU_LIMIT_PER_EMOTE = 20;
     private static final int WORLD_MAX_FRAMES = 256;
     private static final long WORLD_MAX_PREPARED = 4L * 1024 * 1024;
+    private static int animationSlots(){
+        return switch(SupportPreferences.local().performance()){
+            case ECONOMY -> 3; case HIGH -> 12; default -> 8;
+        };
+    }
+    private static int frameLimit(){
+        return switch(SupportPreferences.local().performance()){
+            case ECONOMY -> 32; case HIGH -> 256; default -> 128;
+        };
+    }
+    private static int gpuFrameLimit(){
+        return switch(SupportPreferences.local().performance()){
+            case ECONOMY -> 8; case HIGH -> 32; default -> 20;
+        };
+    }
     private static final long MAX_SOURCE_BYTES = 32L * 1024 * 1024;
     private static final long MAX_PIXELS = 16_000_000L;
     private static final long MAX_PREPARED_BYTES = 20L * 1024 * 1024;
@@ -94,7 +109,7 @@ final class EmotePreviews implements AutoCloseable {
             // Do not evict textures referenced by this render frame. When more
             // than eight distinct animations are visible, extra ones display
             // a safe static first frame until a slot has been idle 2 seconds.
-            if (worldAnimations.size() >= WORLD_CACHE_LIMIT) {
+            if (worldAnimations.size() >= animationSlots()) {
                 Iterator<WorldAnimation> candidates = worldAnimations.values().iterator();
                 boolean freed = false;
                 while (candidates.hasNext()) {
@@ -147,7 +162,7 @@ final class EmotePreviews implements AutoCloseable {
         try {
             current = upload("world/" + id + "/" + frame, prepared.images()[frame]);
             animation.textures.put(frame, current);
-            while (animation.textures.size() > WORLD_GPU_LIMIT_PER_EMOTE) {
+            while (animation.textures.size() > gpuFrameLimit()) {
                 Iterator<Identifier> oldest = animation.textures.values().iterator();
                 Identifier unused = oldest.next();
                 oldest.remove();
@@ -317,7 +332,7 @@ final class EmotePreviews implements AutoCloseable {
         try {
             PreviewFrames.Metadata meta = metadata(file, source);
             int count = meta.times().length;
-            if (count < 2 || count > WORLD_MAX_FRAMES) return null;
+            if (count < 2 || count > frameLimit()) return null;
             byte[][] images = new byte[count][];
             long total = 0;
             for (int i = 0; i < count; i++) {
@@ -404,7 +419,7 @@ final class EmotePreviews implements AutoCloseable {
 
 
     private void trimWorldAnimations() {
-        while (worldAnimations.size() > WORLD_CACHE_LIMIT) {
+        while (worldAnimations.size() > animationSlots()) {
             Iterator<WorldAnimation> entries = worldAnimations.values().iterator();
             WorldAnimation evicted = entries.next();
             entries.remove();

@@ -258,7 +258,7 @@ public final class MoonotesScreen extends Screen {
         }
         reportButton=button(layout.footer(0,4),"Отчёт","Локальная диагностика: версии, счётчики и категории ошибок. Отправки данных нет.",false,b->openReport());
         button(layout.footer(1,4),"Кеш","Проверка изображений и анимации, восстановление отсутствующих файлов.",false,b->{cacheOpen=true;rebuildMoonotesWidgets();});
-        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0-rc.1. Доступны без интернета.",false,b->openReleaseNotes());
+        button(layout.footer(2,4),"Что нового","Изменения Moonotes Network 0.6.0. Доступны без интернета.",false,b->openReleaseNotes());
         button(layout.footer(3,4),"События","Недавние сообщения Moonotes, в том числе при выключенных уведомлениях.",false,b->openEventLog());
     }
 
@@ -669,9 +669,9 @@ public final class MoonotesScreen extends Screen {
         releaseNotesOpen=true;eventsOpen=false;
         reportOpen=true;reportScroll.row=0;reportScroll.release();
         report=String.join("\n",
-            "Moonotes Network 0.6.0-rc.1 — удобный чат и реакции",
+            "Moonotes Network 0.6.0 — удобный чат и реакции",
             "",
-            "НОВОЕ В RC.1",
+            "НОВОЕ В 0.6.0",
             "• Стрелки не выбирают эмоты во время набора сообщения: курсор и история чата работают как обычно.",
             "• Tab и Shift+Tab продолжают выбирать подсказку. Стрелки можно вручную включить в «Настройки → Чат».",
             "• ПКМ по эмоту обновляет свою локальную реакцию даже при быстром повторении.",
@@ -767,7 +767,7 @@ public final class MoonotesScreen extends Screen {
         g.fill(box.x()-1,box.y()-1,box.right()+1,box.bottom()+1,0xFF6C8EB9);
         g.fill(box.x(),box.y(),box.right(),box.bottom(),0xFF1C2C43);
         g.fill(box.x(),box.y(),box.right(),box.y()+25,0xFF2A405E);
-        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в rc.1":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
+        String modalTitle=catalogPreviewOpen?"Проверка каталога":catalogFormOpen?(importTarget.isEmpty()?"Добавить каталог":"Обновить JSON каталога"):catalogPickerOpen?"Показывать в библиотеке":!catalogDetailKey.isEmpty()?"Управление каталогом":cacheOpen?"Кеш и проверка":reportOpen?(releaseNotesOpen?"Что нового в 0.6.0":eventsOpen?"События Moonotes":catalogErrorReport?"Проверка подключения":"Локальный отчёт"):"Просмотр смайлика";
         text(g,modalTitle,box.x()+12,box.y()+9,TEXT);
         if(catalogPreviewOpen){drawCatalogPreview(g,box);return;}
         if(catalogFormOpen){drawCatalogForm(g,box);return;}

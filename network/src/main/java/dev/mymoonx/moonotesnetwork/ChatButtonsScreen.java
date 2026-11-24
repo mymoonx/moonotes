@@ -24,17 +24,19 @@ final class ChatButtonsScreen extends Screen {
     }
     @Override protected void init() {
         super.init();
-        int x=(width-330)/2;
-        prefix=addRenderableWidget(new MoonotesEditBox(font,x,52,330,22,
+        int panelWidth=Math.min(330,Math.max(150,width-20));
+        int x=(width-panelWidth)/2;
+        prefix=addRenderableWidget(new MoonotesEditBox(font,x,52,panelWidth,22,
             Component.literal("Префикс глобального чата")));
         prefix.setMaxLength(4);
         prefix.setValue(WheelSettings.local().prefix());
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,height-28,102,22),
+        int buttonWidth=Math.max(30,(panelWidth-12)/3);
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x,height-28,buttonWidth,22),
             "Сброс","Вернуть кнопки в стандартное место (не сохраняется до подтверждения).",
             false,b -> {draft=new ChatButtonPlacement.Data();status="Расположение сброшено";}));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+113,height-28,103,22),
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+buttonWidth+6,height-28,buttonWidth,22),
             "Отмена","Закрыть без сохранения.",false,b -> onClose()));
-        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+228,height-28,102,22),
+        addRenderableWidget(new MoonotesButton(new MoonotesLayout.Rect(x+(buttonWidth+6)*2,height-28,panelWidth-(buttonWidth+6)*2,22),
             "Сохранить","Сохранить обе позиции и глобальный префикс для текущего сервера.",
             true,b -> save()));
     }
@@ -73,7 +75,7 @@ final class ChatButtonsScreen extends Screen {
         g.centeredText(font,"Положение кнопок в открытом чате",width/2,10,0xFFF0F5FD);
         g.centeredText(font,"Перетаскивание · Привязка к краям GUI · Esc — отмена",
             width/2,29,0xFFBACEE3);
-        int x=(width-330)/2;
+        int x=(width-Math.min(330,Math.max(150,width-20)))/2;
         g.text(font,"Символ глобального чата на этом сервере:",x,41,0xFFA6BED8,false);
         g.fill(8,height-72,width-8,height-42,0xA51A293D);
         g.text(font,"Поле чата — пример расположения",18,height-60,0xFFABBCCF,false);

@@ -219,7 +219,8 @@ public final class MoonotesScreen extends Screen {
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
                 case 3 -> "Профили серверов и локальная диагностика.";
-                default -> "Колесо реакций и эмоты в игровых текстах (только на этом клиенте).";
+                case 4 -> "Колесо реакций и эмоты в игровых текстах (только на этом клиенте).";
+                default -> "Кнопки чата, настройки отправки, копии и диагностика.";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
         var grid=layout.settingsGrid(SETTING_OPTIONS[settingsSection].length);

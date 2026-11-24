@@ -56,7 +56,8 @@ final class MoonotesLayout {
     }
     Rect settingsTab(int index) {
         var side=settingsSidebar();
-        return new Rect(side.x()+5,side.y()+18+index*25,side.width()-10,22);
+        int step=Math.min(25,Math.max(14,(side.height()-20)/6));
+        return new Rect(side.x()+5,side.y()+18+index*step,side.width()-10,Math.min(22,step-2));
     }
     Rect settingsHeading() {
         var side=settingsSidebar();

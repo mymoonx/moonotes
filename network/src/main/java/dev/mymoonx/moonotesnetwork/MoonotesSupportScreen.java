@@ -137,8 +137,9 @@ final class MoonotesSupportScreen extends Screen {
                 if(!MoonotesUpdateCheck.planRollback())
                     status="Нет подходящей резервной версии.";
             });
-        add(x,top+162,inner,"Отменить запланированную установку",false,
-            MoonotesUpdateCheck::cancelPending);
+        if(panelH>=265)
+            add(x,top+162,inner,"Отменить запланированную установку",false,
+                MoonotesUpdateCheck::cancelPending);
     }
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float delta){
         g.fill(left,top,left+panelW,top+panelH,0xF019293E);
@@ -178,13 +179,14 @@ final class MoonotesSupportScreen extends Screen {
             }
             case UPDATES -> {
                 String res=MoonotesUpdateCheck.result();
+                int base=top+(panelH<265?163:195);
                 g.text(font,font.plainSubstrByWidth(res,inner),
-                    left+12,top+195,0xFFBCE2CA,false);
-                g.text(font,"Сейчас: "+MoonotesUpdateCheck.currentVersion()+
-                    (MoonotesUpdateCheck.isPending()?"  ·  ожидает выхода":""),
-                    left+12,top+212,0xFFB4C9DE,false);
-                g.text(font,"В откат сохраняется предыдущий JAR. Требуется SHA-256.",
-                    left+12,top+228,0xFFB4C9DE,false);
+                    left+12,base,0xFFBCE2CA,false);
+                g.text(font,font.plainSubstrByWidth("Сейчас: "+MoonotesUpdateCheck.currentVersion()+
+                    (MoonotesUpdateCheck.isPending()?" · ожидает выхода":""),inner),
+                    left+12,base+16,0xFFB4C9DE,false);
+                if(panelH>=280)g.text(font,"Старый JAR сохраняется. Требуется SHA-256.",
+                    left+12,base+32,0xFFB4C9DE,false);
             }
         }
         if(!status.isBlank())

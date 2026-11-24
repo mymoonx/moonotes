@@ -172,6 +172,7 @@ final class WheelEditorScreen extends Screen {
     private void showRename(boolean show){
         if(pageName==null)return;
         pageName.setVisible(show);pageName.active=show;
+        if(search!=null){search.setVisible(!show);search.active=!show;}
         if(show){pageName.setValue(settings.pageTitle());pageName.setFocused(true);}
         else pageName.setFocused(false);
     }

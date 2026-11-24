@@ -208,6 +208,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             }
         }
         if (joinDelay > 0 && --joinDelay == 0 && !offeredInWorld) {
+            MoonotesUpdateCheck.maybeCheck(); // Once daily; background network only, opt-out in Support.
             long now = System.currentTimeMillis();
             if (config.autoCatalogSync && CatalogRefreshPolicy.due(config.lastCatalogCheckMs, now)) {
                 config.lastCatalogCheckMs = now;

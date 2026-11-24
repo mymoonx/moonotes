@@ -34,8 +34,8 @@ final class ChatOverlayGeometry {
         int x=Math.max(4,width-w-8),y=Math.max(4,height-44-h);
         return new Layout(width,height,x,y,w,h,rows,top,form);
     }
-    static Rect pickerButton(int width,int height){return new Rect(Math.max(4,width-122),height-39,48,21);}
-    static Rect managerButton(int width,int height){return new Rect(Math.max(56,width-70),height-39,64,21);}
+    static Rect pickerButton(int width,int height){return ChatButtonPlacement.picker(width,height);}
+    static Rect managerButton(int width,int height){return ChatButtonPlacement.manager(width,height);}
     static Rect favoriteAction(Rect row){return new Rect(row.x()+row.width()-47,row.y()+3,19,row.height()-6);}
     static Rect moreAction(Rect row){return new Rect(row.x()+row.width()-23,row.y()+3,19,row.height()-6);}
     static Strip suggestions(int width,int height,int count,int preferredX){

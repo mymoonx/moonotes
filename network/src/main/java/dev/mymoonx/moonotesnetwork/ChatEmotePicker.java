@@ -115,7 +115,7 @@ public final class ChatEmotePicker {
         if(pickerEnabled.getAsBoolean()){
             button(g,font,pickerButton(),"Эмоты",open,mouseX,mouseY,"picker","Мини-библиотека: избранное, недавние и ваши группы");
         }
-        button(g,font,managerButton(),"Moonotes",false,mouseX,mouseY,"manager","Открыть Moonotes: библиотека, каталоги и загрузки");
+        button(g,font,managerButton(),"⚙ Moonotes",false,mouseX,mouseY,"manager","Открыть настройки, библиотеку, каталоги и загрузки Moonotes");
         if(open&&pickerEnabled.getAsBoolean())drawPopup(g,font,mouseX,mouseY);
         else drawSuggestions(g,font,mouseX,mouseY,draft,searchFocused);
         if(!isHoveredInteractive(mouseX,mouseY))hoveredKey="";

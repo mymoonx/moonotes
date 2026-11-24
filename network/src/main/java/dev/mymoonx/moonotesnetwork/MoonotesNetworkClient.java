@@ -159,6 +159,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         LegacyIdentityCleanup.run();
         MoonotesNotifications.register();
         StreamotesBridge.initialize();
+        ChatButtonPlacement.local();
         WheelKeybind.register();
         LocalReactionOverlay.register();
         ChatReactionObserver.register();

@@ -43,12 +43,17 @@ final class LocalReactions {
         Visual previous = ACTIVE.get(player);
         // A deliberate right-click should always replace/refresh your reaction.
         // Incoming chat still has a cooldown to prevent a flood of billboards.
-        if (!manual && previous != null && now < previous.until() - 1200) return false;
+        if (!accepts(manual, previous == null ? 0 : previous.until(), now)) return false;
         if (ACTIVE.size() >= MAX) ACTIVE.entrySet().removeIf(e -> e.getValue().until() <= now);
         if (ACTIVE.size() >= MAX && previous == null) return false;
         ACTIVE.put(player, new Visual(player, emote.name(), emote.id(),
             now + ExtrasSettings.local().reactionSeconds() * 1000L));
         return true;
+    }
+
+    /** Pure timing policy for repeat clicks vs incoming chat spam. */
+    static boolean accepts(boolean manual, long previousUntil, long now) {
+        return manual || previousUntil == 0 || now >= previousUntil - 1200;
     }
 
     static List<Visual> active(long now) {

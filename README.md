@@ -31,7 +31,30 @@
 | <a href="assets/screenshots/01-library.jpg"><img src="assets/screenshots/01-library.jpg" width="440" alt="Библиотека эмотов Moonotes"></a> | <a href="assets/screenshots/04-quick-picker.jpg"><img src="assets/screenshots/04-quick-picker.jpg" width="440" alt="Мини-библиотека эмотов в Minecraft"></a> |
 | Поиск, просмотр и избранное | Вставка названий эмотов прямо в чат |
 
-**[Посмотреть все 8 скриншотов с описаниями →](docs/SCREENSHOTS.md)**
+**[Посмотреть галерею: 8 основных и 3 новых скриншота →](docs/SCREENSHOTS.md)**
+
+
+### 🆕 Moonotes 0.6.0-beta.5 — последняя тестовая версия
+
+**[Скачать Moonotes 0.6.0-beta.5](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-beta.5)** — обновлённое колесо с несколькими страницами, анимированный предпросмотр эмотов в редакторе, удобная мини-библиотека, отображение эмотов в книгах и на табличках, диагностика и проверка обновлений.
+
+- **Исправлено:** названия страниц больше не дублируются в центре колеса; кнопка «Настроить» выглядит компактнее.
+- **Добавлено:** крупный анимированный предпросмотр при наведении в редакторе колеса.
+- **Проверено:** сборка и регрессионные тесты Windows/Linux; автор подтвердил работу beta.5 в игре.
+- **Установка:** нужны оба JAR Moonotes из релиза, оригинальный Streamotes и Fabric API. Стабильной версией остаётся **0.5.3**.
+
+[Изменения beta.5](https://github.com/mymoonx/moonotes/blob/feature/0.6.0-beta5-wheel-preview/docs/BETA5-WHEEL-PREVIEW.md) · [Релиз beta.5 с JAR](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0-beta.5)
+
+### Скриншоты возможностей из более ранней alpha.4
+
+Ниже — изображения интерфейса alpha.4. В beta.5 колесо и редактор дополнительно улучшены.
+
+| Колесо быстрых эмотов | Эмоты на табличке |
+| :---: | :---: |
+| <a href="assets/screenshots/alpha4/01-emote-wheel.webp"><img src="assets/screenshots/alpha4/01-emote-wheel.webp" width="440" alt="Колесо эмотов Moonotes 0.6.0-alpha.4"></a> | <a href="assets/screenshots/alpha4/02-emotes-on-sign.webp"><img src="assets/screenshots/alpha4/02-emotes-on-sign.webp" width="440" alt="Эмоты Moonotes на табличке Minecraft"></a> |
+| Восемь настраиваемых слотов, выбор локального и глобального чата | Изображения эмотов непосредственно на табличках Minecraft |
+
+[Показать настройку колеса и остальные скриншоты](docs/SCREENSHOTS.md)
 
 ## 📦 Установка
 

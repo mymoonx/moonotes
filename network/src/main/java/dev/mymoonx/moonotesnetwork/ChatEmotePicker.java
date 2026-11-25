@@ -337,7 +337,10 @@ public final class ChatEmotePicker {
             int selectedLength=input.getHighlighted().length();
             if(selectedLength>0){
                 int other=((dev.mymoonx.moonotesnetwork.mixin.EditBoxSelectionAccessor)input).moonotes$highlightPosition();
-                int from=Math.min(cursor,other),to=Math.max(cursor,other);value=value.substring(0,from)+value.substring(to);cursor=from;replace=false;
+                int from=Math.min(cursor,other),to=Math.max(cursor,other);
+                if (!PrivateMessageSyntax.editable(value, from, to))
+                    throw new IllegalArgumentException("Нельзя менять команду или получателя");
+                value=value.substring(0,from)+value.substring(to);cursor=from;replace=false;
             }
             ChatTextEdit.Result edit=ChatTextEdit.insert(value,cursor,emote.name(),replace,required);
             input.setValue(edit.text());input.setCursorPosition(edit.cursor());input.setHighlightPos(edit.cursor());

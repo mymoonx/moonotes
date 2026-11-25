@@ -1,18 +1,11 @@
 package dev.mymoonx.moonotesnetwork;
 
-import java.util.Locale;
-import java.util.Set;
-
 /**
  * Conservatively permits emote completion only inside the message argument of
  * known private-message commands. Command names and recipients are never edited.
  * No command packet is sent by this helper.
  */
 final class PrivateMessageSyntax {
-    private static final Set<String> RECIPIENT_COMMANDS =
-        Set.of("msg", "tell", "w", "whisper", "pm");
-    private static final Set<String> REPLY_COMMANDS = Set.of("r", "reply");
-
     private PrivateMessageSyntax() { }
 
     /**
@@ -20,7 +13,11 @@ final class PrivateMessageSyntax {
      * string is not a supported chat or private-message draft.
      */
     static int bodyStart(String draft) {
-        if (draft == null) return -1;
+        return bodyStart(draft, ChatCommandRules.local());
+    }
+
+    static int bodyStart(String draft, ChatCommandRules rules) {
+        if (draft == null || rules == null) return -1;
         int length = draft.length();
         int first = 0;
         while (first < length && Character.isWhitespace(draft.charAt(first))) first++;
@@ -31,13 +28,12 @@ final class PrivateMessageSyntax {
         int end = start;
         while (end < length && !Character.isWhitespace(draft.charAt(end))) end++;
         if (start == end || end == length) return -1;
-        String command = draft.substring(start, end).toLowerCase(Locale.ROOT);
-        if (!RECIPIENT_COMMANDS.contains(command) && !REPLY_COMMANDS.contains(command))
-            return -1;
+        ChatCommandRules.Mode mode = rules.mode(draft.substring(start, end));
+        if (mode == null) return -1;
 
         int cursor = end;
         while (cursor < length && Character.isWhitespace(draft.charAt(cursor))) cursor++;
-        if (REPLY_COMMANDS.contains(command))
+        if (mode == ChatCommandRules.Mode.MESSAGE)
             return cursor < length || cursor > end ? cursor : -1;
 
         int recipientStart = cursor;

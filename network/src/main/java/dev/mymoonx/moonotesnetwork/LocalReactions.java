@@ -28,6 +28,7 @@ final class LocalReactions {
         if (!showFor(mc.player.getUUID(), emote, true)) return false;
         MoonotesTelemetry.count(MoonotesTelemetry.Event.LOCAL_REACTION);
         LibraryPreferences.local().used(emote.key());
+        NetworkReactionSession.local().send(emote);
         return true;
     }
 
@@ -49,6 +50,11 @@ final class LocalReactions {
         ACTIVE.put(player, new Visual(player, emote.name(), emote.id(),
             now + ExtrasSettings.local().reactionSeconds() * 1000L));
         return true;
+    }
+
+    /** Validated remote events bypass local chat cooldown; relay enforces its own rate limit. */
+    static boolean showRemote(UUID player, ChatPalette.Emote emote) {
+        return showFor(player, emote, true);
     }
 
     /** Pure timing policy for repeat clicks vs incoming chat spam. */

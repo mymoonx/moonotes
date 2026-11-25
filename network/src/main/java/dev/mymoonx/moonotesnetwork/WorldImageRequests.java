@@ -28,7 +28,7 @@ final class WorldImageRequests {
 
     static void request(EmoteTextTokens.Match match) {
         if (match == null || match.id() == null || !match.id().matches("[A-Za-z0-9]{16,40}")
-                || match.name() == null || !match.name().matches("[A-Za-z0-9_]{1,70}")) return;
+                || !allowedName(match.name())) return;
         String id = match.id().toLowerCase(Locale.ROOT);
         if (!BUDGET.acquire(id, System.nanoTime())) return;
         long generation = GENERATION.get();
@@ -36,6 +36,12 @@ final class WorldImageRequests {
         catch (RejectedExecutionException ignored) {
             // Keep the rate-limit reservation; never fall back to I/O on the render thread.
         }
+    }
+
+    /** Match the catalog's safe alias policy, not the old ASCII-only display regex. */
+    static boolean allowedName(String name) {
+        return name != null && !name.isBlank() && name.length() <= 80
+            && !name.startsWith("/") && !name.matches("(?s).*[\\p{Cc}\\p{Cf}\\s§].*");
     }
 
     private static void requestRegistered(String name, String id, long generation) {

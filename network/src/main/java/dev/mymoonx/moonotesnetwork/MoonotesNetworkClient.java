@@ -169,6 +169,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
         loadInitialManifest();
         requestCacheScan();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            NetworkReactionSession.local().stop(); // Never carry a room into another world.
             inWorld = true;
             offeredInWorld = false;
             activeWorldKey = ServerCatalogProfiles.worldKey(
@@ -188,6 +189,7 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             joinDelay = 100; // allow the world / other mods to finish initial setup
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            NetworkReactionSession.local().stop(); // No background connection after leaving.
             inWorld = false;
             MoonotesNotifications.clearTransient();
             LocalReactionOverlay.disconnect();

@@ -157,6 +157,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         readConfig();
+        ChatCommandRules.initialize(FabricLoader.getInstance().getConfigDir()
+            .resolve("moonotes-chat-commands.json"));
         LegacyIdentityCleanup.run();
         MoonotesNotifications.register();
         StreamotesBridge.initialize();

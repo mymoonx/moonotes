@@ -21,6 +21,11 @@ public final class WorldImageRequestsCheck {
             require(budget.acquire("id-" + i, i * SECOND), "new images continue after old entries expire");
             require(budget.tracked() <= 64, "bounded identity tracking");
         }
+        require(WorldImageRequests.allowedName("pepe-laugh"), "hyphenated alias is downloadable");
+        require(WorldImageRequests.allowedName("Улыбка"), "Unicode alias is downloadable");
+        require(WorldImageRequests.allowedName("cat.wow"), "punctuated alias is downloadable");
+        require(!WorldImageRequests.allowedName("/op"), "command aliases remain blocked");
+        require(!WorldImageRequests.allowedName("bad name"), "whitespace aliases remain blocked");
         System.out.println("WorldImageRequestsCheck: PASS");
     }
     private static void require(boolean value, String label) { if (!value) throw new AssertionError(label); }

@@ -32,7 +32,7 @@ public final class MoonotesScreen extends Screen {
     private final Screen parent;
     private int settingsSection;
     private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
-    private static final int[][] SETTING_OPTIONS={{8,24,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
+    private static final int[][] SETTING_OPTIONS={{8,24,25,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -240,6 +240,7 @@ public final class MoonotesScreen extends Screen {
                     case 7 -> MoonotesNetworkClient.toggleServerProfiles();
                     case 8 -> MoonotesNetworkClient.toggleChatSuggestions();
                     case 24 -> MoonotesNetworkClient.toggleChatSuggestionArrows();
+                    case 25 -> {minecraft.gui.setScreen(new ChatCommandRulesScreen(this));return;}
                     case 9 -> MoonotesNetworkClient.toggleChatPicker();
                     case 10 -> MoonotesNetworkClient.cycleNotificationMode();
                     case 11 -> MoonotesNetworkClient.toggleHudProgress();
@@ -274,6 +275,7 @@ public final class MoonotesScreen extends Screen {
             case 7 -> "Профили серверов";
             case 8 -> "Подсказки в чате";
             case 24 -> "Выбор эмотов стрелками";
+            case 25 -> "Команды с эмотами";
             case 9 -> "Мини-библиотека";
             case 10 -> "Уведомления";
             case 11 -> "Фоновая загрузка на экране";
@@ -303,6 +305,7 @@ public final class MoonotesScreen extends Screen {
             case 7 -> onOff(MoonotesNetworkClient.serverProfilesEnabled());
             case 8 -> onOff(MoonotesNetworkClient.chatSuggestionsEnabled());
             case 24 -> onOff(MoonotesNetworkClient.chatSuggestionArrows());
+            case 25 -> "Изменить список…";
             case 9 -> onOff(MoonotesNetworkClient.chatPickerEnabled());
             case 10 -> MoonotesNetworkClient.notificationModeLabel();
             case 11 -> onOff(MoonotesNetworkClient.hudProgressEnabled());
@@ -328,6 +331,7 @@ public final class MoonotesScreen extends Screen {
             case 7 -> "При входе на сервер восстановить выбранный каталог библиотеки. Адрес сервера сохраняется в локальном профиле только как хеш.";
             case 8 -> "Компактная лента подходящих эмотов. Tab и Shift+Tab выбирают, пробел вставляет выбранный эмот. Стрелки редактируют строку как обычно. Подсказки также работают внутри текста /msg ник, /tell ник, /w ник и /r; команда и ник не изменяются. Остальные команды не затрагиваются.";
             case 24 -> "Необязательное управление подсказками стрелками ↑ ↓ ← →. По умолчанию выключено, чтобы стрелки в чате передвигали курсор и открывали историю сообщений. Tab и Shift+Tab работают независимо.";
+            case 25 -> "Список команд, в которых Moonotes игнорирует префикс и (если нужен) ник, подбирая эмоты только в тексте сообщения. Добавляй, удаляй команды или выбирай режим с получателем/без. Остальные команды не затрагиваются.";
             case 9 -> "Кнопка «Эмоты» рядом со строкой чата открывает избранное, недавние, группы и поиск. Звезда меняет избранное; меню эмота управляет группами. Вставка добавляет текст в чат без отправки.";
             case 10 -> "Всплывающие, только ошибки, сообщения в чате или без уведомлений. Последние события остаются в журнале. Для основного Moonotes общий режим поддерживается с версии 0.4.1.";
             case 11 -> "Во время фоновой загрузки показывать небольшую шкалу в HUD. Скрывается автоматически и клавишей F1.";

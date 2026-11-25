@@ -16,7 +16,7 @@ final class EmoteTextTokens {
     private static final int MAX_NAME_LENGTH = 80;
     private static final int MAX_MATCHES = 64;
     private static long indexedRevision = Long.MIN_VALUE;
-    private static Trie indexed = new Trie();
+    private static Node indexed = new Node();
 
     private EmoteTextTokens() { }
 
@@ -38,7 +38,7 @@ final class EmoteTextTokens {
         return find(text, index(names));
     }
 
-    private static List<Match> find(String text, Trie root) {
+    private static List<Match> find(String text, Node root) {
         if (text == null || text.isEmpty() || text.length() > 4096 || root.children.isEmpty())
             return List.of();
         List<Match> matches = new ArrayList<>();
@@ -80,8 +80,8 @@ final class EmoteTextTokens {
         return List.copyOf(matches);
     }
 
-    private static Trie index(Map<String, ChatPalette.Emote> names) {
-        Trie root = new Trie();
+    private static Node index(Map<String, ChatPalette.Emote> names) {
+        Node root = new Node();
         if (names == null) return root;
         int limit = 0;
         for (var item : names.entrySet()) {
@@ -114,5 +114,4 @@ final class EmoteTextTokens {
         final Map<Character, Node> children = new HashMap<>();
         ChatPalette.Emote emote;
     }
-    private static final class Trie extends Node { }
 }

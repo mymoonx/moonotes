@@ -65,7 +65,8 @@ public final class PrivateMessagePreviewCheck {
         check(find("/msg Alex (му)").isEmpty(), "punctuation adjacency stays literal");
         check(find("/msg @a му").isEmpty(), "recipient selectors are excluded");
 
-        String draft = "/msg му му";
+        // catJAM is a valid Minecraft username *and* a registered emote.
+        String draft = "/msg catJAM catJAM";
         var tokens = find(draft);
         int body = PrivateMessageSyntax.bodyStart(draft);
         check(tokens.size() == 1 && tokens.getFirst().start() == body,
@@ -75,11 +76,11 @@ public final class PrivateMessagePreviewCheck {
         // renderer must undo just the recipient marker and preserve the colour.
         var baseline = FormattedCharSequence.forward(draft,
             Style.EMPTY.withColor(0xABCDEF)
-                .withClickEvent(new ClickEvent.CopyToClipboard("му")));
+                .withClickEvent(new ClickEvent.CopyToClipboard("catJAM")));
         var corrected = PrivateMessagePreview.apply(baseline, draft, 0, body, tokens);
-        check(emoteAt(corrected, draft.indexOf("му")) == null,
+        check(emoteAt(corrected, draft.indexOf("catJAM")) == null,
             "recipient marker is stripped");
-        check("му".equals(emoteAt(corrected, draft.lastIndexOf("му"))),
+        check("catJAM".equals(emoteAt(corrected, draft.lastIndexOf("catJAM"))),
             "message glyph survives syntax formatter");
         final boolean[] sameColour = {false};
         corrected.accept((index, style, cp) -> {
@@ -89,19 +90,19 @@ public final class PrivateMessagePreviewCheck {
             return true;
         });
         check(sameColour[0], "command syntax colour is preserved");
-        check(draft.equals("/msg му му"), "original command text stays unchanged");
+        check(draft.equals("/msg catJAM catJAM"), "original command text stays unchanged");
 
         // CommandSuggestions can combine separately coloured fragments, each
         // with glyph indices starting at zero.
         var fragments = FormattedCharSequence.composite(List.of(
             FormattedCharSequence.forward("/msg ", Style.EMPTY.withColor(0xCCCCCC)),
-            FormattedCharSequence.forward("му", Style.EMPTY.withColor(0x22DD33)),
+            FormattedCharSequence.forward("catJAM", Style.EMPTY.withColor(0x22DD33)),
             FormattedCharSequence.forward(" ", Style.EMPTY),
-            FormattedCharSequence.forward("му", Style.EMPTY.withColor(0xFF8899))));
+            FormattedCharSequence.forward("catJAM", Style.EMPTY.withColor(0xFF8899))));
         var decoratedFragments = PrivateMessagePreview.apply(fragments, draft, 0, body, tokens);
-        check(emoteAt(decoratedFragments, draft.indexOf("му")) == null,
+        check(emoteAt(decoratedFragments, draft.indexOf("catJAM")) == null,
             "coloured recipient fragment stays plain");
-        check("му".equals(emoteAt(decoratedFragments, draft.lastIndexOf("му"))),
+        check("catJAM".equals(emoteAt(decoratedFragments, draft.lastIndexOf("catJAM"))),
             "message glyph spans coloured command fragments");
 
         String longDraft = "/tell Steve hello му";

@@ -73,6 +73,7 @@ public final class BttvChatText {
             applied++;
         }
         if (applied == 0) return source;
+        BttvRenderProbe.chat();
         append(display, text, spans, cursor, text.length());
         return FormattedText.composite(display);
     }

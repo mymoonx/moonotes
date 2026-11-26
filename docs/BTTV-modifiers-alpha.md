@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.5 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.6 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -215,3 +215,49 @@ for correct caret positioning.
 `w! WW` for regression, then `h! WW`, `v! WW`, and
 `WW z! WW` in sent chat. Do not merge draft PR until
 the new 3 effects are confirmed in Minecraft itself.
+
+## Alpha.6: one-letter aliases, clearer operator preview, FIFO loading delay
+
+The Minecraft tester confirmed the previous modifier patch works, but showed
+single-letter aliases like `q`, `v`, and Cyrillic `м` fail with a modifier.
+The parser required at least two characters, and the displayed-chat fast path
+ignored four-character commands such as `w! q`. Both limits now permit **one**
+registered code point / character. This does **not** convert arbitrary letters
+into images: the Streamotes registry must already have that exact alias.
+
+New input feedback requires **no menu or new syntax**: the typed modifier
+(`w!`, `h!`, `v!`, `z!`) is shown in muted gray while waiting for an emote,
+and switches to cyan when the next alias is registered and the effect is active.
+The original typed characters and caret positions are preserved. Moonotes
+also recognises the incomplete prefix by itself, rather than styling it as a
+potential Streamotes emote called `w!`.
+
+The new uploaded test log from 2026-11-26 revealed repeatable ten-second
+`HttpConnectTimeoutException` failures when Streamotes tried fetching the
+**BTTV pseudo-emote images** `w!`, `h!`, `z!`, and `v!`. Streamotes'
+`AsyncEmoticonLoader` is a single-threaded FIFO, so one such failed download
+can delay subsequent valid emote images in the same queue. A narrow guard
+in the existing Streamotes image-loader mixin bypasses only these four
+**BTTV** pseudo-image requests. Other BTTV emotes, 7TV, FFZ and Twitch images
+continue through the normal loader and cache unchanged. This removes the
+identified ten-second queue blockers, but does not guarantee that all 7TV/FFZ
+downloads will be immediate; the same log shows unrelated FFZ SSL errors.
+
+### Smoke tests
+
+- `w! q` — wide, one-letter registered emote
+- `h! v` — mirror, one-letter registered emote
+- `v! м` — flip, one-letter Cyrillic registered emote
+- `w! re` — existing two-letter modifier regression
+- `h!` while typing — gray operator, **not** a failed image download
+- `w! unknown` while typing — gray operator and normal text, no false emote
+- `w! q` — cyan operator once `q` resolves, the original text stays editable
+- `WW z! WW` — remove the display-space separator
+- Verify modifier aliases never hang other cached/uncached emotes.
+- If a particular emote still takes several seconds, compare cold/warm
+  load and collect a new timestamped `latest.log`.
+
+**Installation:** keep `moonotes-0.4.3.jar` and Streamotes
+`1.2.16+26.3`, replace only Network with
+`moonotes-network-0.6.3-alpha.6.jar`. Do not install two Network JARs
+simultaneously. Draft PR remains unmerged pending in-game confirmation.

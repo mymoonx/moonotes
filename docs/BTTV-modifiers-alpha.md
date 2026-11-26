@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.3 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.4 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -49,7 +49,7 @@ PNG/WebP cache; it does not upload altered image copies.
 
 Build artifacts must contain both:
 - `moonotes-0.4.3.jar` (input formatting)
-- `moonotes-network-0.6.3-alpha.3.jar` (recognition and drawable effects)
+- `moonotes-network-0.6.3-alpha.4.jar` (recognition and drawable effects)
 
 Remove both older Moonotes files before installing. Keep the original
 Streamotes mod plus Fabric API; use Minecraft Java 26.3/Java 25. No
@@ -140,7 +140,7 @@ server addresses**. Nothing is sent to Cloudflare or other networks.
 ### Manual reproduction
 
 1. Keep the existing `moonotes-0.4.3.jar`, replace **only Network**
-   with `moonotes-network-0.6.3-alpha.3.jar`. Keep Streamotes.
+   with `moonotes-network-0.6.3-alpha.4.jar`. Keep Streamotes.
 2. Open `/moonotes → Настройки → Отчёт`; copy the current BTTV counter line.
 3. Type `WW` and verify normal emote works; type `w! WW` and inspect
    whether the image exists, and whether the modifier is applied.
@@ -155,3 +155,29 @@ The **in-game rendering result is not yet verified**. A successful CI run
 validates compilation and pure JVM regression checks only. If any counter
 does not increase at the expected stage, investigate that runtime hook
 instead of claiming that modifier support works.
+
+## Alpha.4: startup crash repair
+
+Minecraft crashed on the title-screen loading overlay when using
+`moonotes-network-0.6.3-alpha.3.jar`. The provided crash report
+identified `moonotes-network.mixins.json:BttvGlyphMixin`, and an
+`InvalidInjectionException` saying that the old `@ModifyArg`
+handler expected a different argument signature than the one declared.
+
+The corrected hook uses `@ModifyArgs` and exactly **one** handler
+parameter (`Args`). It reads the actual invocation arguments
+(`int index`, `Style style`, `BakedGlyph glyph`) directly,
+and replaces only argument 2 (the glyph) when a registered BTTV
+modifier is present. There are no outer-method arguments in the
+handler signature.
+
+This change addresses the **confirmed startup crash**. It is
+separate from confirming whether `w! WW` actually renders wide
+in-game. If the game still fails to start, immediately revert only
+Network to the last bootable `moonotes-network-0.6.3-alpha.2.jar`
+and provide the new crash report. Core Moonotes stays `0.4.3`.
+
+`BttvGlyphInjectionCheck` now verifies at build time that this
+Mixin declares the expected one-Args handler and targets the correct
+Minecraft 26.3 overload. This regression cannot prove runtime
+Mixin application; in-game smoke testing is still required.

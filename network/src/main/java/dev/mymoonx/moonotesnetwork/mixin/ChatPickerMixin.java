@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.mymoonx.moonotesnetwork.ChatEmotePicker;
 import dev.mymoonx.moonotesnetwork.MoonotesScreen;
 import dev.mymoonx.moonotesnetwork.MoonotesEditBox;
+import dev.mymoonx.moonotesnetwork.PrivateMessagePreview;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.CommandSuggestions;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -54,6 +55,7 @@ public abstract class ChatPickerMixin extends Screen {
         moonotes$groupName.setHint(Component.literal(moonotes$picker.groupNameHint()));
         moonotes$groupName.setResponder(moonotes$picker::groupNameChanged);
         if(moonotes$savedDraft!=null){input.setValue(moonotes$savedDraft);input.setCursorPosition(moonotes$savedCursor);input.setHighlightPos(moonotes$savedSelection);}
+        PrivateMessagePreview.attach(input); // Preview only on the actual chat input.
         moonotes$sync();
         if(moonotes$picker.isOpen()&&moonotes$activeField()!=null)setFocused(moonotes$activeField());
     }
@@ -149,5 +151,8 @@ public abstract class ChatPickerMixin extends Screen {
         return super.charTyped(event);
     }
     @Inject(method="removed",at=@At("TAIL"))
-    private void moonotes$removed(CallbackInfo ci){moonotes$picker.release();}
+    private void moonotes$removed(CallbackInfo ci){
+        PrivateMessagePreview.detach(input);
+        moonotes$picker.release();
+    }
 }

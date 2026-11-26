@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.1 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.2 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -49,7 +49,7 @@ PNG/WebP cache; it does not upload altered image copies.
 
 Build artifacts must contain both:
 - `moonotes-0.4.3.jar` (input formatting)
-- `moonotes-network-0.6.3-alpha.1.jar` (recognition and drawable effects)
+- `moonotes-network-0.6.3-alpha.2.jar` (recognition and drawable effects)
 
 Remove both older Moonotes files before installing. Keep the original
 Streamotes mod plus Fabric API; use Minecraft Java 26.3/Java 25. No
@@ -80,3 +80,31 @@ Suggested manual checks:
 
 Nothing in `reactions-worker/` or stable `main` has been deployed or modified
 as part of this alpha feature branch.
+
+## Alpha.2: repair for "w! emote not visible"
+
+Initial in-game feedback: `w!` was not showing the emote as expected.
+The first input formatter shortened `w! WW` into `WW` plus padding.
+This does not preserve the chat EditBox's character positions and is unsafe
+for caret positioning, highlighting, and horizontally scrolled input.
+
+Alpha.2 keeps **every original character** visible while the player edits
+the draft. It applies a Streamotes glyph style **only to the emote token**
+and does not change the transmitted message. The actual sent-chat display
+still removes modifier syntax visually and draws the effect.
+
+An additional final-formatting hook runs from the Network JAR after the
+existing edit-box formatters, so the *input preview* also works for players
+who kept an older Moonotes core JAR. The normal Moonotes 0.4.3 core is still
+recommended; **updating Network alone from alpha.1 to alpha.2 is sufficient
+to test this fix**. No Cloudflare redeployment is needed.
+
+Input text such as `w! WW` remains literally `w! WW` in the editing
+field by design. This prevents the cursor from shifting, and the `WW`
+portion should be an emote with wide rendering. In **received chat**,
+the visual modifier prefix is hidden as before.
+
+Manual checks: confirm `WW` alone is visible; then type `w! WW` and
+verify that `WW` becomes an image without the input shifting; send it and
+check whether the sent-chat image is widened. Check `h!`, `v!`, `z!`,
+`!WW`, private messages and tab completion for regressions.

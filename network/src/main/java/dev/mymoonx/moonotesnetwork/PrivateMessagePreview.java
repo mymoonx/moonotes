@@ -47,9 +47,14 @@ public final class PrivateMessagePreview {
         // Even if no message token is present, keep command and recipient
         // as ordinary command text rather than a misleading emote glyph.
         if (tokens.isEmpty() && body <= offset) return existing;
+        return apply(existing, visible, offset, body, tokens);
+    }
+
+    /** Pure render-only composition, separately exercised by regression tests. */
+    static FormattedCharSequence apply(FormattedCharSequence existing, String visible,
+            int offset, int body, List<PrivateMessagePreviewTokens.Span> tokens) {
         FormattedCharSequence underlying = existing != null ? existing
             : FormattedCharSequence.forward(visible, Style.EMPTY);
-
         return sink -> underlying.accept((index, style, codepoint) -> {
             Style drawn = style;
             int absolute = index + offset;

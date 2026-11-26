@@ -1,6 +1,7 @@
 package dev.mymoonx.moonotesnetwork.mixin;
 
 import dev.mymoonx.moonotesnetwork.StreamotesBridge;
+import dev.mymoonx.moonotesnetwork.BttvImageRequestGuard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -15,6 +16,12 @@ public abstract class StreamotesLocalImageMixin {
             at = @At("HEAD"), cancellable = true, remap = false)
     private static void moonotes$loadSharedPng(@Coerce Object emote, URI source, String provider,
                                               String id, CallbackInfo ci) {
+        // BTTV modifier pseudo-emotes are text operators, not drawable icons.
+        // Their 10-second HTTP timeouts can block Streamotes' single FIFO loader.
+        if (BttvImageRequestGuard.skip(provider, emote)) {
+            ci.cancel();
+            return;
+        }
         if (StreamotesBridge.loadCachedImage(emote, source, provider, id)) ci.cancel();
     }
 }

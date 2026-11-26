@@ -42,7 +42,7 @@ public final class BttvChatText {
             spans.add(new Span(start, text.length(), style));
             return Optional.empty();
         }, Style.EMPTY);
-        if (invalid[0] || text.length() < 5 || text.indexOf("! ") < 0) return source;
+        if (invalid[0] || text.length() < 4 || text.indexOf("! ") < 0) return source;
 
         List<BttvModifierSyntax.Match> pairs =
             BttvModifierSyntax.find(text.toString(), registered);

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'dev.mymoonx'
-version = '0.6.3-alpha.6'
+version = '0.6.3-alpha.7'
 
 repositories {
     mavenCentral()

@@ -23,7 +23,9 @@ public final class BttvGlyphInjectionCheck {
         ModifyArgs injection = handler.getAnnotation(ModifyArgs.class);
         if (injection == null)
             throw new AssertionError("Glyph hook must use @ModifyArgs, not @ModifyArg");
-        String target = injection.at().target();
+        if (injection.at().length != 1)
+            throw new AssertionError("Expected a single final-glyph invocation");
+        String target = injection.at()[0].target();
         if (!target.equals("Lnet/minecraft/client/gui/Font$PreparedTextBuilder;"
                 + "accept(ILnet/minecraft/network/chat/Style;"
                 + "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;)Z"))

@@ -136,6 +136,30 @@ public final class StreamotesBridge {
         }
     }
 
+    /**
+     * Only used for reserving visual space after BTTV w!. No images are
+     * duplicated and Streamotes still owns its texture and animation.
+     */
+    public static float chatEmoteWidth(String name) {
+        if (name == null || name.isBlank() || name.length() > 80) return 0;
+        try {
+            Method lookup = directEmoteLookup;
+            if (lookup == null) {
+                lookup = Class.forName("xeed.mc.streamotes.emoticon.EmoticonRegistry")
+                    .getMethod("fromName", String.class);
+                directEmoteLookup = lookup;
+            }
+            Object emote = lookup.invoke(null, name);
+            if (emote == null) return 0;
+            Object width = emote.getClass().getMethod("getChatRenderWidth").invoke(emote);
+            if (width instanceof Number value) {
+                float pixels = value.floatValue();
+                return Float.isFinite(pixels) && pixels > 0 ? Math.min(96, pixels) : 0;
+            }
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) { }
+        return 0;
+    }
+
     /** Honors Streamotes' existing colon setting without changing its configuration. */
     public static String activeChatPrefix() { return WheelSettings.activePrefix(); }
 

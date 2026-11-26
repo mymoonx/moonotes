@@ -23,8 +23,26 @@ final class ChatTextEdit {
                     || ChatPalette.snapshot().stream().anyMatch(e -> e.name().equals(value)));
         }
         if (token.startsWith(":")) token = token.substring(1);
-        if (token.length() < 2 || token.length() > 80) return "";
+        // BTTV control codes are not useful completion candidates.
+        if (BttvModifierSyntax.isOperatorToken(token)) return "";
+        if (token.length() > 80) return "";
+        // Ordinary one-letter chat should not flood the suggestion strip.
+        // After an explicit BTTV operator however, the player deliberately
+        // asked for an emote, and one-letter aliases like q are valid.
+        if (token.length() < 2 && !afterBttvOperator(draft, begin)) return "";
         return token;
+    }
+
+    private static boolean afterBttvOperator(String draft, int wordStart) {
+        if (draft == null || wordStart <= 0) return false;
+        int end = wordStart;
+        while (end > 0 && Character.isWhitespace(draft.charAt(end - 1))) end--;
+        int begin = end;
+        while (begin > 0 && !Character.isWhitespace(draft.charAt(begin - 1))) begin--;
+        String previous = draft.substring(begin, end);
+        if (BttvModifierSyntax.isOperatorToken(previous)) return true;
+        return previous.startsWith("!")
+            && BttvModifierSyntax.isOperatorToken(previous.substring(1));
     }
 
     static Result insert(String draft, int cursor, String name, boolean replaceToken, boolean colonRequired) {

@@ -32,6 +32,10 @@ public final class GlobalChatPrefix {
             // An emote whose *actual name* begins with ! is not a global message.
             if (registered.test(full)) continue;
             String suffix = full.substring(globalPrefix.length());
+            // ! is the server's global-chat router. !w!/!h!/!v!/!z!
+            // are NOT regular !<emote> tokens. Keep them intact for
+            // BttvChatText, which will style the subsequent emote.
+            if (BttvModifierSyntax.isOperatorToken(suffix)) continue;
             if (registered.test(suffix)) {
                 found.add(new Match(words.start(), words.start() + globalPrefix.length(),
                         words.end(), suffix));
@@ -46,7 +50,8 @@ public final class GlobalChatPrefix {
                 || globalPrefix.isEmpty() || registered == null) return token;
         if (!token.startsWith(globalPrefix) || token.length() <= globalPrefix.length()
                 || registered.test(token)) return token;
-        return token.substring(globalPrefix.length());
+        String suffix = token.substring(globalPrefix.length());
+        return BttvModifierSyntax.isOperatorToken(suffix) ? "" : suffix;
     }
 
     static boolean preservePrefix(String draft, int wordStart, String replacement,

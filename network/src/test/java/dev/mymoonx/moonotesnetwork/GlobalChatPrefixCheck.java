@@ -37,6 +37,14 @@ public final class GlobalChatPrefixCheck {
         var custom = GlobalChatPrefix.matches("#WW", "#", known);
         check(custom.size() == 1 && custom.getFirst().name().equals("WW"),
             "user-defined global prefix");
+        check(GlobalChatPrefix.matches("!w! q", "!",
+            name -> known.test(name) || name.equals("w!") || name.equals("q")).isEmpty(),
+            "server's !w! routing must never be parsed as a global emote");
+        check(GlobalChatPrefix.matches("!v! q", "!",
+            name -> known.test(name) || name.equals("v!") || name.equals("q")).isEmpty(),
+            "server's !v! must leave the BTTV operator intact");
+        check(GlobalChatPrefix.suggestion("!w!", "!", name -> name.equals("w!")).isEmpty(),
+            "do not suggest pseudo-emote w! after global ! router");
         check(GlobalChatPrefix.suggestion("!WW", "!", known).equals("WW"),
             "suggest the unprefixed emote");
         check(GlobalChatPrefix.suggestion("!vanish", "!", known).equals("!vanish"),
@@ -52,6 +60,16 @@ public final class GlobalChatPrefixCheck {
             new ChatPalette.Emote("c", "1234567890123458", "!vanish", "set")));
         check(ChatTextEdit.activePrefix("!WW", 3).equals("WW"),
             "chat suggestions ignore the global router");
+        check(ChatTextEdit.activePrefix("!w!", 3).isEmpty(),
+            "global router and BTTV code do not trigger pseudo-emote suggestions");
+        check(ChatTextEdit.activePrefix("w!", 2).isEmpty(),
+            "standalone BTTV operator is not an image suggestion");
+        check(ChatTextEdit.activePrefix("w! q", 4).equals("q"),
+            "explicit operator permits one-letter suggestions");
+        check(ChatTextEdit.activePrefix("!w! q", 5).equals("q"),
+            "global attached BTTV operator permits one-letter suggestions");
+        check(ChatTextEdit.activePrefix("q", 1).isEmpty(),
+            "single-letter text without operator stays free of noisy suggestions");
         check(ChatTextEdit.activePrefix("!vanish", 7).equals("!vanish"),
             "chat suggestions respect exact !alias");
         check(ChatTextEdit.insert("!WW", 3, "WW", true, false).text().equals("!WW "),

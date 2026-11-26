@@ -21,11 +21,19 @@ public final class InputEmoteFormatter {
     private static boolean lookupAttempted;
     private static Method configuredPrefix;
     private static boolean prefixLookupAttempted;
+    private static Method bttvFormatter;
+    private static boolean bttvFormatterLookupAttempted;
 
     private InputEmoteFormatter() {}
 
     public static FormattedCharSequence format(String value, Integer ignoredOffset) {
         if (value == null || value.isEmpty()) return FormattedCharSequence.EMPTY;
+        // The Network addon implements the optional BTTV draw-layer. If it is
+        // absent or unavailable, core keeps its original, safe formatter.
+        if (value.contains("! ")) {
+            FormattedCharSequence modified = bttvPreview(value, ignoredOffset);
+            if (modified != null) return modified;
+        }
 
         Matcher matcher = WORD.matcher(value);
         List<FormattedCharSequence> parts = new ArrayList<>();
@@ -58,6 +66,22 @@ public final class InputEmoteFormatter {
             parts.add(FormattedCharSequence.forward(value.substring(end), Style.EMPTY));
         }
         return parts.size() == 1 ? parts.get(0) : FormattedCharSequence.composite(parts);
+    }
+
+    /** Optional runtime integration: core never links against Network classes. */
+    private static FormattedCharSequence bttvPreview(String value, Integer offset) {
+        try {
+            if (!bttvFormatterLookupAttempted) {
+                bttvFormatterLookupAttempted = true;
+                Class<?> preview = Class.forName("dev.mymoonx.moonotesnetwork.BttvInputPreview");
+                bttvFormatter = preview.getMethod("format", String.class, Integer.class);
+            }
+            Object rendered = bttvFormatter == null ? null
+                : bttvFormatter.invoke(null, value, offset);
+            return rendered instanceof FormattedCharSequence sequence ? sequence : null;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return null;
+        }
     }
 
     /**

@@ -11,6 +11,8 @@
     "ChatPickerMixin",
     "EditBoxPrivateMessagePreviewMixin",
     "GlobalChatPrefixMixin",
+    "BttvChatTextMixin",
+    "BttvGlyphMixin",
     "EditBoxSelectionAccessor",
     "SignTextMixin",
     "BookTextMixin",

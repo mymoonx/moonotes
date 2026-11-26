@@ -5,26 +5,32 @@ import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.network.chat.Style;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 /**
- * Target the exact overloaded accept() call in Minecraft 26.3, AFTER
- * Streamotes' glyph substitution has completed. The earlier @At("STORE")
- * hook could be applied before or miss the substituted glyph entirely.
+ * Modifies the final glyph argument AFTER Streamotes substitutes its baked
+ * glyph. The target overload takes (int, Style, BakedGlyph).
  *
- * This is draw-only: the submitted chat packet and stored Component are
- * untouched. If an installed Streamotes changes its renderer, fail closed.
+ * The alpha.3 @ModifyArg handler incorrectly appended the outer method's
+ * (int, Style, int) parameters. Mixin rejected that signature and crashed
+ * when Font$PreparedTextBuilder loaded on Minecraft's title screen.
+ *
+ * @ModifyArgs accesses BOTH the actual invocation Style and BakedGlyph,
+ * so there is no extra handler signature and no change to vanilla text.
  */
 @Mixin(targets = "net.minecraft.client.gui.Font$PreparedTextBuilder",
     remap = false, priority = 700)
 public abstract class BttvGlyphMixin {
-    @ModifyArg(
+    @ModifyArgs(
         method = "accept(ILnet/minecraft/network/chat/Style;I)Z",
         at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/gui/Font$PreparedTextBuilder;accept(ILnet/minecraft/network/chat/Style;Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;)Z"),
-        index = 2, require = 0)
-    private BakedGlyph moonotes$transformBttv(
-            BakedGlyph glyph, int index, Style style, int codePoint) {
-        return BttvEffectGlyph.wrap(glyph, style);
+        require = 0)
+    private void moonotes$transformBttv(Args args) {
+        Style style = args.get(1);
+        BakedGlyph original = args.get(2);
+        BakedGlyph decorated = BttvEffectGlyph.wrap(original, style);
+        if (decorated != original) args.set(2, decorated);
     }
 }

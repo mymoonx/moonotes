@@ -55,22 +55,31 @@ public final class PrivateMessagePreview {
             int offset, int body, List<PrivateMessagePreviewTokens.Span> tokens) {
         FormattedCharSequence underlying = existing != null ? existing
             : FormattedCharSequence.forward(visible, Style.EMPTY);
-        return sink -> underlying.accept((index, style, codepoint) -> {
-            Style drawn = style;
-            int absolute = index + offset;
-            if (absolute < body && style.getClickEvent() instanceof ClickEvent.CopyToClipboard) {
-                // A broad existing formatter may have highlighted a recipient
-                // whose nickname happens to equal an emote name.
-                drawn = style.withClickEvent(null);
-            } else if (index >= 0 && index < visible.length()) {
-                for (var token : tokens) {
-                    if (index >= token.start() && index < token.end()) {
-                        drawn = style.withClickEvent(new ClickEvent.CopyToClipboard(token.name()));
-                        break;
+        return sink -> {
+            // Brigadier may compose coloured pieces whose individual glyph
+            // indices RESTART at zero. Count code units across the final stream
+            // instead of trusting the per-piece sink index.
+            final int[] position = {0};
+            return underlying.accept((index, style, codepoint) -> {
+                int at = position[0];
+                position[0] += Character.charCount(codepoint);
+                Style drawn = style;
+                if (offset + at < body
+                        && style.getClickEvent() instanceof ClickEvent.CopyToClipboard) {
+                    // A broad existing formatter may have highlighted a recipient
+                    // whose nickname happens to equal an emote name.
+                    drawn = style.withClickEvent(null);
+                } else if (at >= 0 && at < visible.length()) {
+                    for (var token : tokens) {
+                        if (at >= token.start() && at < token.end()) {
+                            drawn = style.withClickEvent(
+                                new ClickEvent.CopyToClipboard(token.name()));
+                            break;
+                        }
                     }
                 }
-            }
-            return sink.accept(index, drawn, codepoint);
-        });
+                return sink.accept(index, drawn, codepoint);
+            });
+        };
     }
 }

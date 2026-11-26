@@ -23,6 +23,8 @@ final class ChatTextEdit {
                     || ChatPalette.snapshot().stream().anyMatch(e -> e.name().equals(value)));
         }
         if (token.startsWith(":")) token = token.substring(1);
+        // BTTV control codes are not useful completion candidates.
+        if (BttvModifierSyntax.isOperatorToken(token)) return "";
         if (token.length() < 2 || token.length() > 80) return "";
         return token;
     }

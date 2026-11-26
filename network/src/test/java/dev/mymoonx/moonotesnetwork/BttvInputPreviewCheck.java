@@ -45,6 +45,16 @@ public final class BttvInputPreviewCheck {
             if (!name.equals("z!"))
                 test(marked(result,"WW",name.charAt(0)), "correct marker "+name);
         }
+        FormattedCharSequence zero = BttvInputPreview.format("WW z! WW", 0);
+        test(zero != null && visible(zero).equals("WW z! WW"),
+            "z! preserves all characters while editing");
+        final int[] markedZero = {0};
+        zero.accept((index, style, codepoint) -> {
+            if (style.getClickEvent() instanceof net.minecraft.network.chat.ClickEvent.CopyToClipboard
+                    && style.getInsertion() == null) markedZero[0]++;
+            return true;
+        });
+        test(markedZero[0] >= 4, "z! styles target as emote without a geometric flip");
         test(BttvInputPreview.format("Hello WW",0) == null,
             "native input fallback for chat without modifier");
         test(BttvInputPreview.format("w! missing",0) == null,

@@ -26,7 +26,7 @@ final class BttvMirroredVertices implements VertexConsumer {
 
     private static final class Vertex {
         float x, y, z, u, v, nx, ny, nz, u3, v3, lineWidth;
-        int red = 255, green = 255, blue = 255, alpha = 255;
+        int packedColor = 0xFFFFFFFF;
         int uv1u, uv1v, uv2u, uv2v;
         boolean colored, uv, hasUv1, hasUv2, hasUv3, hasNormal, hasLineWidth;
     }
@@ -52,7 +52,17 @@ final class BttvMirroredVertices implements VertexConsumer {
     @Override
     public VertexConsumer setColor(int red, int green, int blue, int alpha) {
         if (current != null) {
-            current.red = red; current.green = green; current.blue = blue; current.alpha = alpha;
+            current.packedColor = ((alpha & 255) << 24)
+                | ((red & 255) << 16) | ((green & 255) << 8) | (blue & 255);
+            current.colored = true;
+        }
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setColor(int color) {
+        if (current != null) {
+            current.packedColor = color;
             current.colored = true;
         }
         return this;
@@ -149,7 +159,7 @@ final class BttvMirroredVertices implements VertexConsumer {
 
     private void submit(Vertex v, float u, float uvV) {
         VertexConsumer dst = target.addVertex(v.x, v.y, v.z);
-        if (v.colored) dst.setColor(v.red, v.green, v.blue, v.alpha);
+        if (v.colored) dst.setColor(v.packedColor);
         if (v.uv) dst.setUv(u, uvV);
         if (v.hasUv1) dst.setUv1(v.uv1u, v.uv1v);
         if (v.hasUv2) dst.setUv2(v.uv2u, v.uv2v);

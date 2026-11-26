@@ -707,7 +707,8 @@ public final class MoonotesNetworkClient implements ClientModInitializer {
             lastDirectLatencyMs, lastWorkerLatencyMs,
             lastDownloadSource, manifestError.isEmpty() ? "none" : DiagnosticsReport.errorKind(manifestError),
             lastDownloadFailure.isEmpty() ? "none" : lastDownloadFailure,
-            clicks, drags, selectedCard >= 0, localDiagnostics());
+            clicks, drags, selectedCard >= 0, localDiagnostics())
+            + (localDiagnostics() ? "\\n" + BttvRenderProbe.report() + "\\n" : "");
     }
     static String activeChannel() { return selectedCatalogLabel(); }
     static String itemName(int idx) { Manifest m = knownManifest; return m != null && idx >= 0 && idx < m.emotes.size() ? m.emotes.get(idx).name : ""; }

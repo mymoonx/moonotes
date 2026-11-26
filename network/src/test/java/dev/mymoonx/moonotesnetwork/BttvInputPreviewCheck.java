@@ -40,7 +40,8 @@ public final class BttvInputPreviewCheck {
         for (String name : new String[] {"w!", "h!", "v!", "z!"}) {
             FormattedCharSequence result = BttvInputPreview.format(name + " WW", 0);
             test(result != null, "preview handles "+name);
-            test(visible(result).contains("WW"), "real glyph text remains "+name);
+            test(visible(result).equals(name + " WW"),
+                "input positions stay aligned with the unmodified chat buffer: " + name);
             if (!name.equals("z!"))
                 test(marked(result,"WW",name.charAt(0)), "correct marker "+name);
         }
@@ -54,6 +55,32 @@ public final class BttvInputPreviewCheck {
             "private commands are a separate milestone");
         test(BttvInputPreview.format("h! !vanish",0) != null,
             "registered punctuation alias remains supported");
+
+        // The entire input text must remain visible and editable, including
+        // modifier syntax. The font draws only the registered name as a glyph.
+        String original = "hello w! WW and WW";
+        FormattedCharSequence complete = BttvInputPreview.format(original, 0);
+        test(complete != null && visible(complete).equals(original),
+            "text is not removed, replaced or padded while editing");
+        test(marked(complete, "WW", 'w'), "target glyph keeps wide marker");
+
+        String scrolled = "prefix h! WW";
+        FormattedCharSequence afterScroll = BttvInputPreview.formatVisible(
+            scrolled, scrolled.substring(7), 7);
+        test(afterScroll != null && visible(afterScroll).equals(scrolled.substring(7)),
+            "scrolling retains original character positions");
+        test(marked(afterScroll, "WW", 'h'),
+            "scrolling preserves the effect on the target emote");
+
+        test(BttvInputPreview.formatVisible(
+            "prefix w! WW", "WW", 10) != null,
+            "effect survives when its modifier is outside the visible range");
+        test(BttvInputPreview.formatVisible(
+            "w! WW", "WW", 0) == null,
+            "incorrect viewport offset cannot move the edit cursor");
+        test(BttvInputPreview.formatVisible(
+            "/msg Steve w! WW", "/msg Steve w! WW", 0) == null,
+            "private messages remain on their existing preview renderer");
         System.out.println("BttvInputPreviewCheck: " + checks + " checks passed");
     }
 }

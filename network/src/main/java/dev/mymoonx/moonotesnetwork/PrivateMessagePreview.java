@@ -35,9 +35,17 @@ public final class PrivateMessagePreview {
             FormattedCharSequence existing) {
         if (field == null || !CHAT_INPUTS.contains(field)) return existing;
         String draft = field.getValue();
-        if (draft == null || !draft.startsWith("/") || visible == null
+        if (draft == null || visible == null
                 || draft.length() > PrivateMessagePreviewTokens.MAX_TEXT)
             return existing;
+        // Apply the BTTV preview at the LAST EditBox formatting stage.
+        // Earlier formatters may remove "w! " and make Minecraft's cursor
+        // disagree with the displayed glyphs. This works with both old and
+        // new versions of the optional Moonotes core formatter.
+        if (!draft.stripLeading().startsWith("/")) {
+            FormattedCharSequence bttv = BttvInputPreview.formatVisible(draft, visible, offset);
+            return bttv == null ? existing : bttv;
+        }
 
         int body = PrivateMessageSyntax.bodyStart(draft);
         if (body < 0) return existing;

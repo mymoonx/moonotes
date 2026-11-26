@@ -13,6 +13,15 @@ final class ChatTextEdit {
         int begin = pos;
         while (begin > 0 && !Character.isWhitespace(draft.charAt(begin - 1))) begin--;
         String token = draft.substring(begin, pos);
+        // !WW is a global-chat prefix plus an emote only when !WW is NOT
+        // itself a registered emote name. This does not change the draft.
+        int first = 0;
+        while (first < draft.length() && Character.isWhitespace(draft.charAt(first))) first++;
+        if (body == 0 && begin == first) {
+            token = GlobalChatPrefix.suggestion(token, WheelSettings.activePrefix(),
+                value -> StreamotesBridge.registeredEmoteName(value)
+                    || ChatPalette.snapshot().stream().anyMatch(e -> e.name().equals(value)));
+        }
         if (token.startsWith(":")) token = token.substring(1);
         if (token.length() < 2 || token.length() > 80) return "";
         return token;
@@ -35,10 +44,14 @@ final class ChatTextEdit {
         }
         if (!PrivateMessageSyntax.editable(original, start, end))
             throw new IllegalArgumentException("Имя получателя и команда не должны изменяться");
+        boolean keepGlobalPrefix = replaceToken && messageStart == 0
+            && GlobalChatPrefix.preservePrefix(original, start, name, WheelSettings.activePrefix());
+        if (keepGlobalPrefix) start += WheelSettings.activePrefix().length();
         String token = colonRequired ? ":" + name + ":" : name;
         String before = original.substring(0, start);
         String after = original.substring(end);
-        String prefix = !before.isEmpty() && !Character.isWhitespace(before.charAt(before.length()-1)) ? " " : "";
+        String prefix = keepGlobalPrefix ? ""
+            : !before.isEmpty() && !Character.isWhitespace(before.charAt(before.length()-1)) ? " " : "";
         String suffix = !after.isEmpty() && Character.isWhitespace(after.charAt(0)) ? "" : " ";
         String value = before + prefix + token + suffix + after;
         if (value.length() > 256) throw new IllegalArgumentException("Не хватает места в сообщении");

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  */
 public final class BttvModifierSyntax {
     private static final Pattern PAIR =
-        Pattern.compile("(?<!\\S)([whvz]!)\\s+([^\\s:]{2,80})(?=\\s|$)");
+        Pattern.compile("(?<!\\S)([whvz]!)\\s+([^\\s:]{1,80})(?=\\s|$)");
     private static final int MAX_TEXT = 4096;
     private static final int MAX_PAIRS = 32;
 

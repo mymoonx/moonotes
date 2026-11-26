@@ -45,6 +45,7 @@ public final class BttvInputPreview {
 
         List<BttvModifierSyntax.Match> modifiers = BttvModifierSyntax.find(draft, registered);
         if (modifiers.isEmpty()) return null;
+        BttvRenderProbe.input();
 
         List<Token> tokens = new ArrayList<>();
         Matcher words = WORD.matcher(draft);

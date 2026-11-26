@@ -2,9 +2,9 @@
 
 **Эмоты 7TV в Minecraft — библиотека, каталоги Twitch-каналов, избранное и быстрый выбор прямо в игровом чате.**
 
-**Minecraft Java 26.3** · **Fabric** · **Java 25** · **Moonotes 0.6.0**
+**Minecraft Java 26.3** · **Fabric** · **Java 25** · **Moonotes Network 0.6.3-alpha.7 (тестовая версия)**
 
-[📦 Скачать последнюю версию](https://github.com/mymoonx/moonotes/releases/latest) · [🖼 Все скриншоты](docs/SCREENSHOTS.md) · [🛠 Разработчикам](docs/DEVELOPMENT.md)
+[📦 Скачать актуальную 0.6.3-alpha.7](https://github.com/mymoonx/moonotes/releases/tag/v0.6.3-alpha.7) · [🖼 Все скриншоты](docs/SCREENSHOTS.md) · [🛠 Разработчикам](docs/DEVELOPMENT.md)
 
 ---
 
@@ -13,13 +13,18 @@
 | 🎮 **Я хочу пользоваться модом** | 💻 **Я хочу работать с кодом** |
 | --- | --- |
 | Скачать готовые файлы, установить их и играть. Ничего собирать не нужно. | Исходники, сборка, тесты, архитектура и Cloudflare Worker. |
-| **[Скачать Moonotes v0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0)** | **[Документация для разработчиков](docs/DEVELOPMENT.md)** |
+| **[Скачать Moonotes 0.6.3-alpha.7](https://github.com/mymoonx/moonotes/releases/tag/v0.6.3-alpha.7)** | **[Документация для разработчиков](docs/DEVELOPMENT.md)** |
 
-### 🧪 Тестовая версия Moonotes 0.6.3-alpha.7
+## 📦 Последняя версия для скачивания — 0.6.3-alpha.7
 
-**[Скачать Moonotes 0.6.3-alpha.7 (prerelease)](https://github.com/mymoonx/moonotes/releases/tag/v0.6.3-alpha.7)** — модификаторы BTTV `w!`, `h!`, `v!`, `z!`, подсказки односимвольных эмотов и экспериментальные исправления серверного чата Paper с глобальным `!`.
+**[Открыть релиз Moonotes 0.6.3-alpha.7](https://github.com/mymoonx/moonotes/releases/tag/v0.6.3-alpha.7)**
 
-Это **не стабильное обновление**: поддержка особенностей реальных Paper-плагинов ещё тестируется. Для установки нужны оба JAR из релиза: Moonotes `0.4.3` и Moonotes Network `0.6.3-alpha.7`, а также оригинальный Streamotes. Стабильным выпуском остаётся **[Moonotes 0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0)**.
+Для игры нужны **два JAR-файла** из этого релиза:
+
+- **[Скачать Moonotes 0.4.3.jar](https://github.com/mymoonx/moonotes/releases/download/v0.6.3-alpha.7/moonotes-0.4.3.jar)** — основной мод.
+- **[Скачать Moonotes Network 0.6.3-alpha.7.jar](https://github.com/mymoonx/moonotes/releases/download/v0.6.3-alpha.7/moonotes-network-0.6.3-alpha.7.jar)** — библиотека, подсказки, BTTV-эффекты и сетевые функции.
+
+Новая версия включает модификаторы BTTV `w!`, `h!`, `v!`, `z!`, короткие эмоты и исправления отображения на Paper-серверах. **Это предварительная alpha, а не проверенный стабильный релиз:** работа с реальными Paper-плагинами ещё тестируется. Стабильную [Moonotes 0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0) можно скачать отдельно.
 
 ## ✨ Возможности
 
@@ -73,10 +78,10 @@
 **Нужны Minecraft Java 26.3, Fabric Loader 0.20.1+, совместимый Fabric API и Java 25.**
 
 1. Установите или оставьте оригинальный **[Streamotes 1.2.16+26.3 (Fabric)](https://www.curseforge.com/minecraft/mc-mods/streamotes/files/9032701)**.
-2. Скачайте **оба файла** из [релиза Moonotes v0.6.0](https://github.com/mymoonx/moonotes/releases/tag/v0.6.0):
-   - [`moonotes-0.4.1.jar`](https://github.com/mymoonx/moonotes/releases/download/v0.6.0/moonotes-0.4.1.jar) — предпросмотр эмотов и каналы текущего мира.
-   - [`moonotes-network-0.6.0.jar`](https://github.com/mymoonx/moonotes/releases/download/v0.6.0/moonotes-network-0.6.0.jar) — библиотека, каталоги, группы и загрузка.
-3. Закройте Minecraft и поместите оба файла Moonotes в папку `mods` рядом со Streamotes и Fabric API.
+2. Скачайте **оба файла** из [релиза Moonotes 0.6.3-alpha.7](https://github.com/mymoonx/moonotes/releases/tag/v0.6.3-alpha.7):
+   - [`moonotes-0.4.3.jar`](https://github.com/mymoonx/moonotes/releases/download/v0.6.3-alpha.7/moonotes-0.4.3.jar) — основной Moonotes.
+   - [`moonotes-network-0.6.3-alpha.7.jar`](https://github.com/mymoonx/moonotes/releases/download/v0.6.3-alpha.7/moonotes-network-0.6.3-alpha.7.jar) — библиотека, каталоги, эффекты BTTV и загрузка.
+3. Закройте Minecraft, уберите старые JAR Moonotes и Moonotes Network из папки `mods` и поместите туда два скачанных файла рядом со Streamotes и Fabric API.
 4. Запустите игру. Откройте менеджер командой **`/moonotes`** или кнопкой «Moonotes» возле чата.
 
 Разные номера версий двух JAR — **это нормально**. Cloudflare Worker отдельно устанавливать **не нужно**.

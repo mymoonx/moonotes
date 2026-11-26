@@ -15,7 +15,9 @@ import net.minecraft.network.chat.Style;
  * message exactly unchanged, and uses the real registered Streamotes alias.
  *
  * It also handles styled message fragments from Paper chat plugins. Styles
- * with their own click actions or insertion are never overwritten.
+ * retain their click/insertion styles everywhere except the replaced emote
+ * token, where Streamotes requires its own glyph marker. The original
+ * server message and all other clickable text remain untouched.
  */
 public final class BttvChatText {
     private static final int MAX_TEXT = 4096;
@@ -89,8 +91,12 @@ public final class BttvChatText {
     private static boolean safe(List<Span> spans, int start, int end) {
         for (Span span : spans) {
             if (span.start() >= end || span.end() <= start) continue;
-            if (span.style().getClickEvent() != null || span.style().getInsertion() != null
-                    || span.style().isObfuscated()) return false;
+            // Paper plugins can apply a click/insertion style to an entire
+            // chat message, including the visible text. The original styles
+            // stay intact outside the emote token. Only the recognized emote
+            // glyph needs Streamotes' CopyToClipboard(name) marker (and our
+            // render insertion tag), just as native Streamotes does.
+            if (span.style().isObfuscated()) return false;
         }
         return true;
     }

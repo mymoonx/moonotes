@@ -56,8 +56,8 @@ public final class GlobalChatRichTextCheck {
         var literal = Component.literal("!vanish !setgame");
         check(GlobalChatRichText.decorate(literal, "!", names::containsKey) == literal,
             "exact !emotes win and are handled normally by Streamotes");
-        check(GlobalChatRichText.decorate(Component.literal("! WW"), "!", names::containsKey)
-            .getString().equals("! WW"), "space-separated form is unchanged");
+        check(text(GlobalChatRichText.decorate(Component.literal("! WW"), "!", names::containsKey))
+            .equals("! WW"), "space-separated form is unchanged");
 
         var link = Component.literal("!WW").withStyle(
             Style.EMPTY.withClickEvent(new ClickEvent.CopyToClipboard("original")));

@@ -66,6 +66,19 @@ public final class GlobalChatPrefixCheck {
             "space-separated global form unchanged");
         check(ChatTextEdit.activePrefix("/say !WW", 8).isEmpty(),
             "unrelated commands remain untouched");
+        Map<String, ChatPalette.Emote> forReactions = Map.of(
+            "WW", new ChatPalette.Emote("ww", "1234567890123456", "WW", "set"),
+            "!vanish", new ChatPalette.Emote("v", "1234567890123457", "!vanish", "set"),
+            "vanish", new ChatPalette.Emote("v2", "1234567890123458", "vanish", "set"),
+            "!setgame", new ChatPalette.Emote("s", "1234567890123459", "!setgame", "set"));
+        check(ChatReactionObserver.findEmote("!WW", forReactions).name().equals("WW"),
+            "chat reaction observes global !WW as WW");
+        check(ChatReactionObserver.findEmote("!vanish", forReactions).name().equals("!vanish"),
+            "chat reaction prefers exact !vanish");
+        check(ChatReactionObserver.findEmote("!setgame", forReactions).name().equals("!setgame"),
+            "chat reaction preserves !setgame");
+        check(ChatReactionObserver.findEmote("! WW", forReactions).name().equals("WW"),
+            "chat reaction supports legacy spaced global prefix");
         System.out.println("GlobalChatPrefixCheck: " + checks + " checks passed");
     }
 }

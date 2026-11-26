@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  */
 public final class BttvModifierSyntax {
     private static final Pattern PAIR =
-        Pattern.compile("(?<!\\S)([whvz]!)\\s+([^\\s:]{1,80})(?=\\s|$)");
+        Pattern.compile("(?<!\\S)!?([whvz]!)\\s+([^\\s:]{1,80})(?=\\s|$)");
     private static final int MAX_TEXT = 4096;
     private static final int MAX_PAIRS = 32;
 
@@ -48,7 +48,9 @@ public final class BttvModifierSyntax {
             if (!registered.test(emote)) continue;
             Modifier modifier = Modifier.fromCode(matcher.group(1).charAt(0));
             if (modifier == null) continue;
-            matches.add(new Match(matcher.start(), matcher.start(2), matcher.end(), emote, modifier));
+            // Start at the BTTV operator, not the optional leading ! chat router.
+            // This preserves the server-owned global prefix in both input and display.
+            matches.add(new Match(matcher.start(1), matcher.start(2), matcher.end(), emote, modifier));
         }
         return List.copyOf(matches);
     }

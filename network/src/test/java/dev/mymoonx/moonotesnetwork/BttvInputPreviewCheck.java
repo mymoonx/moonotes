@@ -57,8 +57,24 @@ public final class BttvInputPreviewCheck {
         test(markedZero[0] >= 4, "z! styles target as emote without a geometric flip");
         test(BttvInputPreview.format("Hello WW",0) == null,
             "native input fallback for chat without modifier");
-        test(BttvInputPreview.format("w! missing",0) == null,
-            "no side effects for unregistered alias");
+        FormattedCharSequence pending = BttvInputPreview.format("w! missing", 0);
+        test(pending != null && visible(pending).equals("w! missing"),
+            "pending modifier stays visible as literal text without a fetch");
+        test(!marked(pending, "missing", 'w'),
+            "unregistered alias is not transformed");
+        FormattedCharSequence partial = BttvInputPreview.format("w!", 0);
+        test(partial != null && visible(partial).equals("w!"),
+            "modifier is recognized before an emote is typed");
+
+        for (String alias : new String[]{"q", "v", "м"}) {
+            String draft = "h! " + alias;
+            FormattedCharSequence shortAlias = BttvInputPreview.formatVisible(
+                draft, draft, 0, word -> word.equals(alias));
+            test(shortAlias != null && visible(shortAlias).equals(draft),
+                "one-character input preview keeps original text: " + draft);
+            test(marked(shortAlias, alias, 'h'),
+                "one-character glyph preview retains effect: " + draft);
+        }
         test(BttvInputPreview.format("/tp h! WW",0) == null,
             "never apply effects to command syntax");
         test(BttvInputPreview.format("/msg Steve h! WW",0) == null,

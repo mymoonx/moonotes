@@ -23,7 +23,7 @@ import java.util.Optional;
  */
 @Mixin(value = ComponentRenderUtils.class, remap = false)
 public abstract class GlobalChatPrefixMixin {
-    @ModifyVariable(method = "wrapComponents", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    @ModifyVariable(method = "wrapComponents", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
     private static FormattedText moonotes$globalEmotePrefix(FormattedText text) {
         if (text == null) return null;
         String prefix = StreamotesBridge.activeChatPrefix();

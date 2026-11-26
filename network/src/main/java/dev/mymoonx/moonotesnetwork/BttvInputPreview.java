@@ -20,7 +20,10 @@ public final class BttvInputPreview {
 
     /** Null means core must use its original non-modifier formatting. */
     public static FormattedCharSequence format(String draft, Integer ignoredOffset) {
-        if (draft == null || draft.isEmpty() || draft.length() > 256) return null;
+        // First milestone: ordinary chat only. Commands have a separate
+        // Brigadier syntax formatter and will be handled in a later stage.
+        if (draft == null || draft.isEmpty() || draft.length() > 256
+                || draft.stripLeading().startsWith("/")) return null;
         if (BttvModifierSyntax.find(draft,
                 StreamotesBridge::registeredEmoteName).isEmpty()) return null;
         FormattedText transformed = BttvChatText.decorate(FormattedText.of(draft));

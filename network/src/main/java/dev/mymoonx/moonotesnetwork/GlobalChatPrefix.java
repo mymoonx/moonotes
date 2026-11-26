@@ -12,15 +12,15 @@ import java.util.regex.Pattern;
  * Parsing affects rendering/suggestions ONLY; the Minecraft chat payload
  * stays byte-for-byte unchanged.
  */
-final class GlobalChatPrefix {
+public final class GlobalChatPrefix {
     private static final Pattern WORD = Pattern.compile("[^\\s:]{2,}|:?[^\\s:]+:?");
     private static final int MAX_INPUT = 4096;
     private static final int MAX_MATCHES = 32;
-    record Match(int prefixStart, int contentStart, int end, String name) { }
+    public record Match(int prefixStart, int contentStart, int end, String name) { }
 
     private GlobalChatPrefix() { }
 
-    static List<Match> matches(String content, String globalPrefix, Predicate<String> registered) {
+    public static List<Match> matches(String content, String globalPrefix, Predicate<String> registered) {
         if (content == null || globalPrefix == null || globalPrefix.isEmpty()
                 || content.length() > MAX_INPUT || registered == null) return List.of();
         Matcher words = WORD.matcher(content);

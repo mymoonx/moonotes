@@ -1,0 +1,37 @@
+name: Set Moonotes 0.6.3-alpha.7 as Latest
+
+# Explicit owner request: show this release in the GitHub sidebar as Latest.
+# Keep the version and release notes visibly marked as alpha/test.
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/releases/promote-v0.6.3-alpha.7.md
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    if: github.repository == 'mymoonx/moonotes'
+    name: Mark tested build as GitHub Latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify download assets and update GitHub Latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view v0.6.3-alpha.7 --json tagName,isDraft,assets \
+            --jq '.tagName' | grep -Fx 'v0.6.3-alpha.7'
+          for expected in moonotes-0.4.3.jar moonotes-network-0.6.3-alpha.7.jar SHA256SUMS.txt; do
+            gh release view v0.6.3-alpha.7 --json assets --jq '.assets[].name' | grep -Fx "$expected"
+          done
+          gh release edit v0.6.3-alpha.7 --prerelease=false
+          gh release edit v0.6.3-alpha.7 --latest --title 'Moonotes 0.6.3-alpha.7 — актуальная тестовая сборка'
+          actual="$(gh api "repos/${GH_REPO}/releases/latest" --jq '.tag_name')"
+          test "$actual" = 'v0.6.3-alpha.7'
+          echo "Confirmed latest release: $actual"

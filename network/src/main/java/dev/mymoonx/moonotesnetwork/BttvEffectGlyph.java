@@ -51,30 +51,36 @@ public final class BttvEffectGlyph implements BakedGlyph {
 
     private record Transformed(TextRenderable.Styled base,
             BttvModifierSyntax.Modifier modifier) implements TextRenderable.Styled {
-        private float xFactor() {
-            return switch (modifier) {
-                case HORIZONTAL -> -1f;
-                case WIDE -> 2f;
-                default -> 1f;
-            };
-        }
-        private float yFactor() {
-            return modifier == BttvModifierSyntax.Modifier.VERTICAL ? -1f : 1f;
-        }
-
         @Override
         public void render(Matrix4fc original, VertexConsumer consumer, int light, boolean noDepth) {
-            float left = base.left(), right = base.right();
-            float top = base.top(), bottom = base.bottom();
-            float centerX = modifier == BttvModifierSyntax.Modifier.WIDE
-                ? left : (left + right) / 2f;
-            float centerY = (top + bottom) / 2f;
-            Matrix4f transform = new Matrix4f(original);
-            transform.translate(centerX, centerY, 0f)
-                .scale(xFactor(), yFactor(), 1f)
-                .translate(-centerX, -centerY, 0f);
             BttvRenderProbe.drawn();
-            base.render(transform, consumer, light, noDepth);
+            if (modifier == BttvModifierSyntax.Modifier.HORIZONTAL
+                    || modifier == BttvModifierSyntax.Modifier.VERTICAL) {
+                // A negative X/Y scale reverses the quad's winding and is
+                // culled on Minecraft's textured chat pipeline. Mirror the
+                // live sprite-frame UVs while keeping geometry facing front.
+                BttvMirroredVertices mirrored = new BttvMirroredVertices(
+                    consumer, modifier == BttvModifierSyntax.Modifier.HORIZONTAL,
+                    modifier == BttvModifierSyntax.Modifier.VERTICAL);
+                try {
+                    base.render(original, mirrored, light, noDepth);
+                } finally {
+                    mirrored.finish();
+                }
+                return;
+            }
+
+            if (modifier == BttvModifierSyntax.Modifier.WIDE) {
+                float left = base.left();
+                float centerY = (base.top() + base.bottom()) / 2f;
+                Matrix4f widened = new Matrix4f(original);
+                widened.translate(left, centerY, 0f)
+                    .scale(2f, 1f, 1f)
+                    .translate(-left, -centerY, 0f);
+                base.render(widened, consumer, light, noDepth);
+                return;
+            }
+            base.render(original, consumer, light, noDepth);
         }
 
         @Override public RenderType renderType(Font.DisplayMode displayMode) {

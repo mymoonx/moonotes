@@ -1,0 +1,32 @@
+name: Reactions beta protocol
+
+on:
+  pull_request:
+    paths:
+      - 'reactions-worker/**'
+      - 'network/**'
+      - '.github/workflows/reactions-beta.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  relay:
+    name: Durable Object protocol / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Check Worker source syntax and protocol tests
+        working-directory: reactions-worker
+        run: npm run check && npm test
+
+# No Cloudflare tokens, deployments, chat access or infrastructure mutations in CI.

@@ -93,15 +93,24 @@ public final class ChatReactionObserver {
 
     static ChatPalette.Emote findEmote(String body, Map<String,ChatPalette.Emote> available) {
         if (body == null || body.length() > 256) return null;
-        // Server convention: ! selects global chat. It is not part of an alias.
-        if (body.startsWith("!")) body = body.substring(1).stripLeading();
+        String prefix = WheelSettings.activePrefix();
+        boolean routed = prefix != null && !prefix.isEmpty() && body.startsWith(prefix);
         int used = 0;
         for (String word : body.split("\\s+")) {
             if (++used > 32) break;
             if (word.startsWith(":") && word.endsWith(":") && word.length() > 2)
                 word = word.substring(1, word.length() - 1);
-            ChatPalette.Emote emote = available.get(word);
-            if (emote != null) return emote;
+            // Preserve real emotes named !vanish or !setgame ahead of the
+            // global-chat prefix interpretation.
+            ChatPalette.Emote exact = available.get(word);
+            if (exact != null) return exact;
+            if (routed && used == 1 && word.startsWith(prefix)) {
+                String suffix = word.substring(prefix.length());
+                if (suffix.startsWith(":") && suffix.endsWith(":") && suffix.length() > 2)
+                    suffix = suffix.substring(1, suffix.length() - 1);
+                ChatPalette.Emote stripped = available.get(suffix);
+                if (stripped != null) return stripped;
+            }
         }
         return null;
     }

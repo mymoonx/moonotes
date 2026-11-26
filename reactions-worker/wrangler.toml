@@ -1,0 +1,13 @@
+name = "moonotes-reactions"
+main = "src/index.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# Dedicated relay, separate from moonotes-emotes and its R2 storage.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "ReactionRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ReactionRoom"]

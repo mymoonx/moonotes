@@ -32,7 +32,7 @@ public final class MoonotesScreen extends Screen {
     private final Screen parent;
     private int settingsSection;
     private static final String[] SETTING_SECTIONS={"Чат", "Сеть", "Вид", "Система", "Эмоты+", "Дополнительно"};
-    private static final int[][] SETTING_OPTIONS={{8,24,25,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20},{21,22}};
+    private static final int[][] SETTING_OPTIONS={{8,24,25,9,3,4,23},{0,1,2,6},{10,14,11,12,13},{7,5},{15,16,17,18,19,20,26},{21,22}};
     private final List<net.minecraft.util.FormattedCharSequence> wrappedReportLines=new ArrayList<>();
     private int reportWrapWidth=-1;
     private String wrappedReport="";
@@ -219,7 +219,7 @@ public final class MoonotesScreen extends Screen {
                 case 1 -> "Источники, параллельные запросы и обновление каталогов.";
                 case 2 -> "Уведомления и расположение фоновой загрузки на экране.";
                 case 3 -> "Профили серверов и локальная диагностика.";
-                case 4 -> "Колесо реакций и эмоты в игровых текстах (только на этом клиенте).";
+                case 4 -> "Колесо, эмоты в мире и добровольное подключение сетевых реакций.";
                 default -> "Кнопки чата, настройки отправки, копии и диагностика.";
             },settingsSection==i,b->{settingsSection=section;settingsScroll.row=0;settingsScroll.release();rebuildMoonotesWidgets();}));
         }
@@ -248,6 +248,7 @@ public final class MoonotesScreen extends Screen {
                     case 13 -> { minecraft.gui.setScreen(new HudLayoutScreen(this));return; }
                     case 14 -> MoonotesNetworkClient.toggleUnifiedStreamotesNotifications();
                     case 15,16,17,18,19,20 -> ExtrasSettings.local().cycle(option);
+                     case 26 -> {minecraft.gui.setScreen(new NetworkReactionsScreen(this));return;}
                     case 21 -> {minecraft.gui.setScreen(new ChatButtonsScreen(this));return;}
                     case 22 -> {minecraft.gui.setScreen(new MoonotesSupportScreen(this));return;}
                     case 23 -> {minecraft.gui.setScreen(new ChatRoutingScreen(this));return;}
@@ -283,6 +284,7 @@ public final class MoonotesScreen extends Screen {
             case 14 -> "Уведомления Streamotes";
             case 15 -> "Колесо быстрых эмотов";
             case 16 -> "Реакции над персонажем";
+            case 26 -> "Сетевые реакции (beta)";
             case 17 -> "Длительность реакции";
             case 18 -> "Эмоты на табличках";
             case 19 -> "Эмоты в книгах";
@@ -312,6 +314,9 @@ public final class MoonotesScreen extends Screen {
             case 12 -> MoonotesNetworkClient.hudCornerLabel();
             case 14 -> MoonotesNetworkClient.unifiedStreamotesNotifications()?"В общей очереди":"Отдельно";
             case 15,16,17,18,19,20 -> ExtrasSettings.local().value(option);
+            case 26 -> NetworkReactionSession.local().connected()
+                ? "Подключено · участников: " + NetworkReactionSession.local().peers()
+                : "Настроить соединение…";
             case 21 -> "Расположить кнопки…";
             case 23 -> "Настроить префикс…";
             case 22 -> "Открыть центр поддержки…";
@@ -338,7 +343,8 @@ public final class MoonotesScreen extends Screen {
             case 12 -> "Переставить HUD в один из четырёх углов. Точное положение можно настроить перетаскиванием.";
             case 14 -> "Автоматические сообщения Streamotes показываются по очереди с Moonotes, без наложения. Способ показа задаёт настройка «Уведомления». Если сообщения отключены в самом Streamotes, они останутся отключены. «Отдельно» возвращает обычные уведомления Streamotes.";
             case 15 -> "Нажмите G. В колесе можно настроить 8 слотов и выбрать локальный или глобальный (!) чат. ЛКМ — отправить, Shift+ЛКМ — черновик, ПКМ — своя реакция.";
-            case 16 -> "Эмот над персонажем уменьшается с расстоянием и скрывается за стенами. В первом лице — маленькое превью слева сверху. ПКМ не отправляет реакцию другим игрокам.";
+            case 16 -> "Эмот над персонажем уменьшается с расстоянием и скрывается за стенами. В первом лице — превью слева сверху. ПКМ остаётся локальным без добровольного подключения к сетевой комнате.";
+            case 26 -> "Тестовый режим: создать секретный код или присоединиться к доверенному другу. Нужен отдельный Cloudflare Worker реакций. Код не подтверждает личность Minecraft-аккаунта. Соединение отключается при выходе из мира.";
             case 17 -> "Время показа реакции: 2, 4 или 6 секунд.";
             case 18 -> "Эмоты активных каталогов рисуются отдельными изображениями на обычных и подвесных табличках. До загрузки картинки видно имя. Исходный текст сохраняется.";
             case 19 -> "Эмоты активных каталогов в готовых книгах, на кафедрах и в редакторе. Изображение занимает место имени; курсор, ссылки и сохранение текста работают как обычно.";

@@ -1,0 +1,12 @@
+{
+  "name": "moonotes-reactions-relay",
+  "private": true,
+  "version": "0.6.2-beta.1",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check src/index.mjs && node --check src/protocol.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}

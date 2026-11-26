@@ -9,6 +9,8 @@
     "StreamotesLocalChannelMixin",
     "StreamotesLocalImageMixin",
     "ChatPickerMixin",
+    "EditBoxPrivateMessagePreviewMixin",
+    "GlobalChatPrefixMixin",
     "EditBoxSelectionAccessor",
     "SignTextMixin",
     "BookTextMixin",

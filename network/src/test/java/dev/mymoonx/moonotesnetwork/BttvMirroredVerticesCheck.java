@@ -34,6 +34,10 @@ public final class BttvMirroredVerticesCheck {
             current.color = (a << 24) | (r << 16) | (g << 8) | b;
             return this;
         }
+        @Override public VertexConsumer setColor(int argb) {
+            current.color = argb;
+            return this;
+        }
         @Override public VertexConsumer setUv(float u, float v) {
             current.u = u; current.v = v; return this;
         }

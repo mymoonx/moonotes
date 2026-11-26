@@ -20,6 +20,14 @@ import net.minecraft.util.FormattedCharSequence;
  */
 public final class BttvInputPreview {
     private static final Pattern WORD = Pattern.compile("[^\\s:]{2,}|:?[^\\s:]+:?");
+    // Recognize standalone BTTV operators even before the next emote is
+    // fully typed. This prevents Streamotes from trying to download "w!"
+    // as an image and keeps chat autocomplete and the caret aligned.
+    private static final Pattern PREFIX = Pattern.compile("(?<!\\\\S)([whvz]!)(?=\\\\s|$)");
+    private static final Style ACTIVE_PREFIX = Style.EMPTY.withColor(0x69C8D1);
+    private static final Style PENDING_PREFIX = Style.EMPTY.withColor(0x989CA5);
+    private record Prefix(int start, int end, boolean active) { }
+
     private static final int MAX_DRAFT = 256;
     private record Token(int start, int end, String name, BttvModifierSyntax.Modifier modifier) { }
 
@@ -44,8 +52,16 @@ public final class BttvInputPreview {
             return null;
 
         List<BttvModifierSyntax.Match> modifiers = BttvModifierSyntax.find(draft, registered);
-        if (modifiers.isEmpty()) return null;
-        BttvRenderProbe.input();
+        List<Prefix> prefixes = new ArrayList<>();
+        Matcher prefixMatcher = PREFIX.matcher(draft);
+        while (prefixMatcher.find() && prefixes.size() < 32) {
+            int start = prefixMatcher.start(), end = prefixMatcher.end();
+            boolean active = modifiers.stream().anyMatch(pair ->
+                pair.start() == start && pair.emoteStart() > end);
+            prefixes.add(new Prefix(start, end, active));
+        }
+        if (prefixes.isEmpty()) return null;
+        if (!modifiers.isEmpty()) BttvRenderProbe.input();
 
         List<Token> tokens = new ArrayList<>();
         Matcher words = WORD.matcher(draft);
@@ -54,8 +70,8 @@ public final class BttvInputPreview {
             String word = words.group();
             // A valid modifier is syntax, even when someone also registered
             // an emote named "w!" or "h!".
-            boolean isModifier = modifiers.stream().anyMatch(pair ->
-                wordStart == pair.start() && wordEnd <= pair.emoteStart());
+            boolean isModifier = prefixes.stream().anyMatch(prefix ->
+                prefix.start() == wordStart && prefix.end() == wordEnd);
             if (isModifier) continue;
 
             BttvModifierSyntax.Modifier effect = null;
@@ -88,8 +104,7 @@ public final class BttvInputPreview {
         for (Token token : tokens) {
             if (token.start() < cursor || token.end() > last) continue;
             if (token.start() > cursor)
-                segments.add(FormattedCharSequence.forward(
-                    draft.substring(cursor, token.start()), Style.EMPTY));
+                appendLiteral(segments, draft, cursor, token.start(), prefixes);
             Style style = Style.EMPTY.withClickEvent(new ClickEvent.CopyToClipboard(token.name()));
             if (token.modifier() != null
                     && token.modifier() != BttvModifierSyntax.Modifier.ZERO_SPACE)
@@ -101,7 +116,25 @@ public final class BttvInputPreview {
             cursor = token.end();
         }
         if (cursor < last)
-            segments.add(FormattedCharSequence.forward(draft.substring(cursor, last), Style.EMPTY));
+            appendLiteral(segments, draft, cursor, last, prefixes);
         return segments.isEmpty() ? null : FormattedCharSequence.composite(segments);
+    }
+
+    /** Only visual styling; no characters are removed from the draft. */
+    private static void appendLiteral(List<FormattedCharSequence> out, String draft,
+            int start, int end, List<Prefix> prefixes) {
+        int position = start;
+        for (Prefix prefix : prefixes) {
+            if (prefix.start() < position || prefix.end() > end) continue;
+            if (position < prefix.start())
+                out.add(FormattedCharSequence.forward(
+                    draft.substring(position, prefix.start()), Style.EMPTY));
+            out.add(FormattedCharSequence.forward(
+                draft.substring(prefix.start(), prefix.end()),
+                prefix.active() ? ACTIVE_PREFIX : PENDING_PREFIX));
+            position = prefix.end();
+        }
+        if (position < end)
+            out.add(FormattedCharSequence.forward(draft.substring(position, end), Style.EMPTY));
     }
 }

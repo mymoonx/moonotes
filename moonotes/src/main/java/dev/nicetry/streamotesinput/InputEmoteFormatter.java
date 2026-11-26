@@ -19,6 +19,8 @@ public final class InputEmoteFormatter {
     private static final Pattern WORD = Pattern.compile("[^\\s:]{2,}|:?[^\\s:]+:?");
     private static Method fromName;
     private static boolean lookupAttempted;
+    private static Method configuredPrefix;
+    private static boolean prefixLookupAttempted;
 
     private InputEmoteFormatter() {}
 
@@ -33,19 +35,49 @@ public final class InputEmoteFormatter {
             // Only match exact names in this first prototype. :name: and punctuation
             // need a more advanced cursor/selection-aware rich-text field.
             if (typed.startsWith(":") || typed.endsWith(":")) continue;
-            if (!knownEmote(typed)) continue;
-
-            if (matcher.start() > end) {
-                parts.add(FormattedCharSequence.forward(value.substring(end, matcher.start()), Style.EMPTY));
+            String emoteName = typed;
+            int nameStart = matcher.start();
+            if (!knownEmote(typed)) {
+                String global = globalPrefix();
+                if (global.isEmpty() || !typed.startsWith(global)
+                        || typed.length() <= global.length()) continue;
+                String afterPrefix = typed.substring(global.length());
+                if (!knownEmote(afterPrefix)) continue;
+                emoteName = afterPrefix;
+                nameStart += global.length();
             }
-            Style emoteStyle = Style.EMPTY.withClickEvent(new ClickEvent.CopyToClipboard(typed));
-            parts.add(FormattedCharSequence.forward(typed, emoteStyle));
+
+            if (nameStart > end) {
+                parts.add(FormattedCharSequence.forward(value.substring(end, nameStart), Style.EMPTY));
+            }
+            Style emoteStyle = Style.EMPTY.withClickEvent(new ClickEvent.CopyToClipboard(emoteName));
+            parts.add(FormattedCharSequence.forward(emoteName, emoteStyle));
             end = matcher.end();
         }
         if (end < value.length()) {
             parts.add(FormattedCharSequence.forward(value.substring(end), Style.EMPTY));
         }
         return parts.size() == 1 ? parts.get(0) : FormattedCharSequence.composite(parts);
+    }
+
+    /**
+     * Network is optional. If it is installed, use its per-world chat prefix;
+     * otherwise the legacy global prefix defaults to !.
+     */
+    private static String globalPrefix() {
+        try {
+            if (!prefixLookupAttempted) {
+                prefixLookupAttempted = true;
+                Class<?> bridge = Class.forName("dev.mymoonx.moonotesnetwork.StreamotesBridge");
+                configuredPrefix = bridge.getMethod("activeChatPrefix");
+            }
+            if (configuredPrefix != null) {
+                Object value = configuredPrefix.invoke(null);
+                if (value instanceof String prefix && prefix.length() >= 1 && prefix.length() <= 4)
+                    return prefix;
+            }
+        } catch (ReflectiveOperationException | LinkageError ignored) { }
+        return "!";
     }
 
     private static boolean knownEmote(String name) {

@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.4 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.5 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -181,3 +181,37 @@ and provide the new crash report. Core Moonotes stays `0.4.3`.
 Mixin declares the expected one-Args handler and targets the correct
 Minecraft 26.3 overload. This regression cannot prove runtime
 Mixin application; in-game smoke testing is still required.
+
+## Alpha.5: fix invisible h! / v! emotes (after in-game confirmation w! works)
+
+The 0.6.3-alpha.4 tester confirmed `w!` works, but reported that
+`h!`, `v!` and `z!` do not display as expected.
+
+Root-cause candidate for `h!` and `v!`: negative X/Y scaling of the
+whole quad reverses its vertex winding. The graphics renderer can cull
+the back face instead of showing a flipped emote.
+
+Alpha.5 replaces negative geometry scaling with a 4-vertex UV mirror:
+- **Same world and screen vertex coordinates**: preserve original quad winding
+  and front-facing visibility, no additional graphics buffers.
+- **Mirror only the U coordinates** for horizontal (`h!`) and only the V
+  coordinates for vertical (`v!`).
+- **Mirror strictly within the actual U/V bounds of the current frame**.
+  This avoids sampling a different animation frame in a Streamotes sprite sheet.
+- `w!` retains its previous 2x positive X scale because it is proven in game.
+- Adds `BttvMirroredVerticesCheck` regression verifying orientation, frame
+  UV range, color and light output, alongside the existing modifier/parser tests.
+
+The official BTTV `z!` behavior is specifically **remove the space before
+the emote**. It is **not** horizontal/vertical scaling, and not 7TV zero-width
+overlay. Thus `z! WW` at the very start has no visible special
+transformation; test `WW z! WW` to see two adjacent emotes instead.
+The edit box continues showing the unmodified literal text during input
+for correct caret positioning.
+
+**Installation:** replace only the Network JAR with
+`moonotes-network-0.6.3-alpha.5.jar` and keep
+`moonotes-0.4.3.jar` and original Streamotes. First test
+`w! WW` for regression, then `h! WW`, `v! WW`, and
+`WW z! WW` in sent chat. Do not merge draft PR until
+the new 3 effects are confirmed in Minecraft itself.

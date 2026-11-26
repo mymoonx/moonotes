@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Style;
 
 /** Regression for real BTTV prefix syntax and render-only message styling. */
 public final class BttvModifierSyntaxCheck {
-    private static final Set<String> EMOTES = Set.of("catJAM", "WW", "TopHat", "!vanish");
+    private static final Set<String> EMOTES = Set.of("catJAM", "WW", "TopHat", "!vanish", "q", "м", "v");
     private static int checks;
     private static void yes(boolean condition, String description) {
         checks++;
@@ -47,6 +47,23 @@ public final class BttvModifierSyntaxCheck {
             yes(matches.getFirst().emote().equals("catJAM"), "next emote only");
             yes(matches.getFirst().modifier().code() == c, "modifier identity");
         }
+        for (String alias : new String[] {"q", "v", "м"}) {
+            String draft = "w! " + alias;
+            var parsed = BttvModifierSyntax.find(draft, EMOTES::contains);
+            yes(parsed.size() == 1 && parsed.getFirst().emote().equals(alias),
+                "registered single-character emote must work: " + draft);
+        }
+        yes(BttvModifierSyntax.find("w! x", EMOTES::contains).isEmpty(),
+            "an unregistered one-letter word is not an emote");
+        var oneLetter = BttvChatText.decorate(
+            Component.literal("w! q"), EMOTES::contains);
+        yes(plain(oneLetter).startsWith("q") && effect(oneLetter, "q", 'w'),
+            "shortest chat message w! q becomes a wide emote");
+        var russian = BttvChatText.decorate(
+            Component.literal("v! м"), EMOTES::contains);
+        yes(plain(russian).equals("м") && effect(russian, "м", 'v'),
+            "single Cyrillic character remains a valid emote target");
+
         yes(BttvModifierSyntax.find("w!fake", EMOTES::contains).isEmpty(),
             "modifier requires a separating space");
         yes(BttvModifierSyntax.find("w! notRegistered", EMOTES::contains).isEmpty(),

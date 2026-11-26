@@ -37,6 +37,12 @@ public final class BttvModifierSyntax {
 
     public record Match(int start, int emoteStart, int end, String emote, Modifier modifier) { }
 
+    /** Exact BTTV control tokens: never interpret them as ordinary emote aliases. */
+    static boolean isOperatorToken(String token) {
+        return "w!".equals(token) || "h!".equals(token)
+            || "v!".equals(token) || "z!".equals(token);
+    }
+
     private BttvModifierSyntax() { }
 
     public static List<Match> find(String text, Predicate<String> registered) {

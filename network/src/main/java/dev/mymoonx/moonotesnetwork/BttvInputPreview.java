@@ -23,7 +23,7 @@ public final class BttvInputPreview {
     // Recognize standalone BTTV operators even before the next emote is
     // fully typed. This prevents Streamotes from trying to download "w!"
     // as an image and keeps chat autocomplete and the caret aligned.
-    private static final Pattern PREFIX = Pattern.compile("(?<!\\\\S)([whvz]!)(?=\\\\s|$)");
+    private static final Pattern PREFIX = Pattern.compile("(?<!\\S)([whvz]!)(?=\\s|$)");
     private static final Style ACTIVE_PREFIX = Style.EMPTY.withColor(0x69C8D1);
     private static final Style PENDING_PREFIX = Style.EMPTY.withColor(0x989CA5);
     private record Prefix(int start, int end, boolean active) { }

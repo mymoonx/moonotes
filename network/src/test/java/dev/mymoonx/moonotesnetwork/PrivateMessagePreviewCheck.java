@@ -44,7 +44,7 @@ public final class PrivateMessagePreviewCheck {
     }
 
     public static void main(String[] args) {
-        word("/msg ник му", "му");
+        word("/msg Steve му", "му");
         word("/tell Steve catJAM", "catJAM");
         word("/w Alex му", "му");
         word("/pm Alex му", "му");

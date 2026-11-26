@@ -108,7 +108,7 @@ public final class StreamotesBridge {
     }
 
     /** Resolve only names actually registered with the original Streamotes. */
-    static boolean registeredEmoteName(String name) {
+    public static boolean registeredEmoteName(String name) {
         if (name == null || name.isBlank() || name.length() > 80) return false;
         Api current = api;
         if (current == null) return false;
@@ -117,6 +117,8 @@ public final class StreamotesBridge {
     }
 
     /** Honors Streamotes' existing colon setting without changing its configuration. */
+    public static String activeChatPrefix() { return WheelSettings.activePrefix(); }
+
     public static String chatText(String name) {
         if (name == null) return "";
         return "Required".equals(activationMode()) && !(name.startsWith(":") && name.endsWith(":"))

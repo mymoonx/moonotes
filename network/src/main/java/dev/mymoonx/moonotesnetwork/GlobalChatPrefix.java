@@ -50,7 +50,8 @@ public final class GlobalChatPrefix {
                 || globalPrefix.isEmpty() || registered == null) return token;
         if (!token.startsWith(globalPrefix) || token.length() <= globalPrefix.length()
                 || registered.test(token)) return token;
-        return token.substring(globalPrefix.length());
+        String suffix = token.substring(globalPrefix.length());
+        return BttvModifierSyntax.isOperatorToken(suffix) ? "" : suffix;
     }
 
     static boolean preservePrefix(String draft, int wordStart, String replacement,

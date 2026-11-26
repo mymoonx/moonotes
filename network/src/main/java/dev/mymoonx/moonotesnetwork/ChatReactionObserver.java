@@ -105,7 +105,10 @@ public final class ChatReactionObserver {
             ChatPalette.Emote exact = available.get(word);
             if (exact != null) return exact;
             if (routed && used == 1 && word.startsWith(prefix)) {
-                ChatPalette.Emote stripped = available.get(word.substring(prefix.length()));
+                String suffix = word.substring(prefix.length());
+                if (suffix.startsWith(":") && suffix.endsWith(":") && suffix.length() > 2)
+                    suffix = suffix.substring(1, suffix.length() - 1);
+                ChatPalette.Emote stripped = available.get(suffix);
                 if (stripped != null) return stripped;
             }
         }

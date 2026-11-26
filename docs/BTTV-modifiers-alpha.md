@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.6 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.7 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -261,3 +261,75 @@ downloads will be immediate; the same log shows unrelated FFZ SSL errors.
 `1.2.16+26.3`, replace only Network with
 `moonotes-network-0.6.3-alpha.6.jar`. Do not install two Network JARs
 simultaneously. Draft PR remains unmerged pending in-game confirmation.
+
+## Alpha.7: Paper server chat, !w! global routing and one-letter suggestions
+
+### Server-side chat routing is not an emote code
+
+The server reserves the leading `!` to route messages to global chat. Its
+meaning is **server-owned**. BTTV's `w!`, `h!`, `v!` and `z!` are separate
+client-side **presentation-only** modifiers.
+
+- `w! q` — local chat with a wide `q` emote
+- `!w! q` — global-chat routing `!`, then wide `q` (no extra space)
+- `! w! q` — legacy spaced form remains supported
+- `!WW` — pre-existing global emote behavior remains supported
+- `!w!` alone is a pending operator, not an image to download
+- `!/other` and unknown control strings remain completely untouched
+
+Crucially the packet sent to Paper is never modified: the whole original
+string is preserved for server routing, commands, signatures and other mods.
+
+### Styled Paper chat and safe click handling
+
+Paper chat plugins commonly split the global tag, nickname, `!`, operator,
+spaces and emote between differently colored and clickable Components.
+The previous display parser rejected a **whole match** if *any* of those
+segments carried a click action or insertion. That made BTTV fail for
+server-formatted chat even though it worked in a singleplayer world.
+
+Alpha.7 matches the operator across styled spans and preserves all original
+font/color/hover/click/insertion styles **outside the modified emote**.
+To create the emote image with the installed Streamotes, its own
+`CopyToClipboard(emoteName)` style is required on the target glyph; when the
+entire server message is clickable, that precise emote span therefore uses the
+Streamotes click marker rather than the server's action. All surrounding
+server text remains clickable. Obfuscated server text is still left untouched.
+
+The legacy `GlobalChatPrefix` parser now excludes the four BTTV modifier
+codes from `!<emote>` resolution so it cannot steal the global route's `!`
+before the BTTV renderer gets a chance to process the message.
+
+### Input completion
+
+In normal chat, one-letter prefix suggestions remain disabled to avoid
+polluting regular typing. **Immediately after a recognized BTTV operator**,
+however, one-letter registered aliases such as `q` are eligible for normal
+Moonotes suggestions, both for `w! q` and `!w! q`. No new popup/window
+or extra keystrokes. The `w!` code stays cyan when active, gray while
+waiting, without changing the actual editable message.
+
+### Test and limitations
+
+The unit/regression suite covers: `!w! q` with exact source indices,
+`! w! q`, messages with server tags and click-styled nicknames, split
+colored Components and inherited insertion, standalone global-code input,
+ordinary `!WW`, unknown aliases, and one-letter completion. The test suite
+does **not** simulate a real Paper plugin or a second player. Other clients
+must install compatible Streamotes/Moonotes to see the effects; server routing
+still depends on the actual chat plugin.
+
+**Install:** keep `moonotes-0.4.3.jar` and original Streamotes.
+Replace Network only with `moonotes-network-0.6.3-alpha.7.jar` and
+remove older Network JARs from mods.
+
+Test in this order: `w! q` in singleplayer; on Paper server
+`w! q`, `!w! q`, `! w! q`, `h! WW`, `!WW` and normal chat
+without modifiers. Check the BTTV local diagnostics line before and after
+sending `!w! q`; a nonzero increment in `chat` confirms the formatter
+matched a displayed message. If the server consumes or rewrites the message,
+request the resulting displayed text and fresh latest.log rather than
+changing the server plugin blindly.
+
+This is still a **draft candidate** until tested on the user's real Paper
+server; no changes to stable releases or Cloudflare.

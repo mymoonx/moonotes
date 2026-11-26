@@ -35,9 +35,12 @@ public final class PrivateMessagePreviewCheck {
 
     private static String emoteAt(FormattedCharSequence sequence, int target) {
         final String[] value = {null};
+        final int[] position = {0};
         sequence.accept((index, style, codepoint) -> {
-            if (index == target && style.getClickEvent() instanceof ClickEvent.CopyToClipboard click)
+            if (position[0] == target
+                    && style.getClickEvent() instanceof ClickEvent.CopyToClipboard click)
                 value[0] = click.value();
+            position[0] += Character.charCount(codepoint);
             return true;
         });
         return value[0];
@@ -87,6 +90,19 @@ public final class PrivateMessagePreviewCheck {
         });
         check(sameColour[0], "command syntax colour is preserved");
         check(draft.equals("/msg му му"), "original command text stays unchanged");
+
+        // CommandSuggestions can combine separately coloured fragments, each
+        // with glyph indices starting at zero.
+        var fragments = FormattedCharSequence.composite(List.of(
+            FormattedCharSequence.forward("/msg ", Style.EMPTY.withColor(0xCCCCCC)),
+            FormattedCharSequence.forward("му", Style.EMPTY.withColor(0x22DD33)),
+            FormattedCharSequence.forward(" ", Style.EMPTY),
+            FormattedCharSequence.forward("му", Style.EMPTY.withColor(0xFF8899))));
+        var decoratedFragments = PrivateMessagePreview.apply(fragments, draft, 0, body, tokens);
+        check(emoteAt(decoratedFragments, draft.indexOf("му")) == null,
+            "coloured recipient fragment stays plain");
+        check("му".equals(emoteAt(decoratedFragments, draft.lastIndexOf("му"))),
+            "message glyph spans coloured command fragments");
 
         String longDraft = "/tell Steve hello му";
         int visibleOffset = longDraft.indexOf("hello");

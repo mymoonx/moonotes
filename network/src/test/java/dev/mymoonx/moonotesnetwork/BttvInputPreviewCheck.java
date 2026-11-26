@@ -75,6 +75,35 @@ public final class BttvInputPreviewCheck {
             test(marked(shortAlias, alias, 'h'),
                 "one-character glyph preview retains effect: " + draft);
         }
+        FormattedCharSequence globalAttached = BttvInputPreview.formatVisible(
+            "!w! q", "!w! q", 0, word -> word.equals("q") || word.equals("w!"));
+        test(globalAttached != null && visible(globalAttached).equals("!w! q"),
+            "global message !w! q preserves the entire real server-bound draft");
+        test(marked(globalAttached, "q", 'w'),
+            "attached global ! never steals the wide effect from q");
+        final int[] fakeOperator = {0};
+        globalAttached.accept((index, style, codepoint) -> {
+            if (codepoint == 'w' && style.getClickEvent() instanceof ClickEvent.CopyToClipboard)
+                fakeOperator[0]++;
+            return true;
+        });
+        test(fakeOperator[0] == 0,
+            "the operator w! is not styled as a standalone downloaded image");
+        FormattedCharSequence globalSpaced = BttvInputPreview.formatVisible(
+            "! w! q", "! w! q", 0, word -> word.equals("q"));
+        test(globalSpaced != null && visible(globalSpaced).equals("! w! q"),
+            "global message with an explicit gap remains editable");
+        test(marked(globalSpaced, "q", 'w'),
+            "spaced global operator applies correctly");
+        FormattedCharSequence pendingGlobal = BttvInputPreview.formatVisible(
+            "!w!", "!w!", 0, word -> word.equals("w!"));
+        test(pendingGlobal != null && visible(pendingGlobal).equals("!w!"),
+            "incomplete !w! stays plain server text rather than a pseudo-emote");
+        test(BttvInputPreview.formatVisible("!w! q", "q", 4,
+            word -> word.equals("q")) != null,
+            "global prefix remains parseable when scrolled out of the visible EditBox");
+        test(GlobalChatPrefix.suggestion("!w!", "!", word -> word.equals("w!")).isEmpty(),
+            "server prefix + BTTV operator never offers pseudo-emote completion");
         test(BttvInputPreview.format("/tp h! WW",0) == null,
             "never apply effects to command syntax");
         test(BttvInputPreview.format("/msg Steve h! WW",0) == null,

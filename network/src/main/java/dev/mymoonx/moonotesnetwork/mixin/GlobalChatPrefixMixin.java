@@ -2,7 +2,6 @@ package dev.mymoonx.moonotesnetwork.mixin;
 
 import dev.mymoonx.moonotesnetwork.GlobalChatPrefix;
 import dev.mymoonx.moonotesnetwork.StreamotesBridge;
-import dev.mymoonx.moonotesnetwork.WheelSettings;
 import net.minecraft.client.ComponentCollector;
 import net.minecraft.client.gui.components.ComponentRenderUtils;
 import net.minecraft.network.chat.ClickEvent;
@@ -27,7 +26,7 @@ public abstract class GlobalChatPrefixMixin {
     @ModifyVariable(method = "wrapComponents", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private static FormattedText moonotes$globalEmotePrefix(FormattedText text) {
         if (text == null) return null;
-        String prefix = WheelSettings.activePrefix();
+        String prefix = StreamotesBridge.activeChatPrefix();
         if (prefix == null || prefix.isEmpty()) return text;
 
         ComponentCollector result = new ComponentCollector();

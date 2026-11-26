@@ -107,6 +107,15 @@ public final class StreamotesBridge {
                 + (h.problem().isEmpty() ? "" : "\nСостояние: " + h.problem());
     }
 
+    /** Resolve only names actually registered with the original Streamotes. */
+    static boolean registeredEmoteName(String name) {
+        if (name == null || name.isBlank() || name.length() > 80) return false;
+        Api current = api;
+        if (current == null) return false;
+        try { return current.find(name) != null; }
+        catch (ReflectiveOperationException | RuntimeException ignored) { return false; }
+    }
+
     /** Honors Streamotes' existing colon setting without changing its configuration. */
     public static String chatText(String name) {
         if (name == null) return "";

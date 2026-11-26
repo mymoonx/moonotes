@@ -1,4 +1,4 @@
-# Moonotes 0.6.3-alpha.2 — BTTV emote modifiers (Minecraft Java 26.3)
+# Moonotes 0.6.3-alpha.3 — BTTV emote modifiers (Minecraft Java 26.3)
 
 Experimental first-stage implementation of four real BetterTTV prefix modifiers.
 The syntax follows BetterTTV's documented `w! emote`, `h! emote`,
@@ -49,7 +49,7 @@ PNG/WebP cache; it does not upload altered image copies.
 
 Build artifacts must contain both:
 - `moonotes-0.4.3.jar` (input formatting)
-- `moonotes-network-0.6.3-alpha.2.jar` (recognition and drawable effects)
+- `moonotes-network-0.6.3-alpha.3.jar` (recognition and drawable effects)
 
 Remove both older Moonotes files before installing. Keep the original
 Streamotes mod plus Fabric API; use Minecraft Java 26.3/Java 25. No
@@ -108,3 +108,50 @@ Manual checks: confirm `WW` alone is visible; then type `w! WW` and
 verify that `WW` becomes an image without the input shifting; send it and
 check whether the sent-chat image is widened. Check `h!`, `v!`, `z!`,
 `!WW`, private messages and tab completion for regressions.
+
+## Alpha.3: actual Minecraft/Streamotes render-hook check
+
+After installing both previous JARs, an in-game tester reported the BTTV
+effects still did not appear. Earlier offline tests showed that the markup
+parser worked, but cannot prove the Streamotes glyph hook was executed.
+
+Alpha.3 targets a more precise 26.3 method call:
+`Font$PreparedTextBuilder.accept(int, Style, int)` forwards a prepared
+`BakedGlyph` to its `accept(int, Style, BakedGlyph)` overload. Moonotes
+now wraps that **final argument**, after Streamotes's own glyph substitution,
+instead of using the old local-variable STORE injection.
+
+For diagnosis this experimental build includes five **ephemeral, local-only**
+counters in the copyable Moonotes diagnostics report:
+
+```text
+BTTV input/chat/marker/wrap/draw: A/B/C/D/E
+```
+
+- `input`: recognized and styled a BTTV pair in the chat input
+- `chat`: decorated a visible chat message containing a BTTV pair
+- `marker`: modifier insertion survived as far as the glyph hook
+- `wrap`: the hook actually received a Streamotes EmoticonGlyph
+- `draw`: a transformed effect's draw method was executed
+
+Only counters are recorded — **no chat contents, emote names, identities or
+server addresses**. Nothing is sent to Cloudflare or other networks.
+
+### Manual reproduction
+
+1. Keep the existing `moonotes-0.4.3.jar`, replace **only Network**
+   with `moonotes-network-0.6.3-alpha.3.jar`. Keep Streamotes.
+2. Open `/moonotes → Настройки → Отчёт`; copy the current BTTV counter line.
+3. Type `WW` and verify normal emote works; type `w! WW` and inspect
+   whether the image exists, and whether the modifier is applied.
+4. Send `w! WW` and look at the resulting Minecraft chat line.
+5. Copy the BTTV counter line again. The relative increases reveal
+   exactly which stage failed.
+6. If needed, attach `logs/latest.log` from this Minecraft launch
+   (do not share server addresses, chat logs or private information
+   without reviewing the file).
+
+The **in-game rendering result is not yet verified**. A successful CI run
+validates compilation and pure JVM regression checks only. If any counter
+does not increase at the expected stage, investigate that runtime hook
+instead of claiming that modifier support works.

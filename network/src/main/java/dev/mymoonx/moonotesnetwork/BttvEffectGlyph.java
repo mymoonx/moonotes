@@ -27,10 +27,13 @@ public final class BttvEffectGlyph implements BakedGlyph {
     }
 
     public static BakedGlyph wrap(BakedGlyph source, Style style) {
-        if (source == null || style == null || !(source.getClass().getName()
-                .equals("xeed.mc.streamotes.EmoticonGlyph"))) return source;
+        if (source == null || style == null) return source;
         var effect = BttvModifierSyntax.marked(style.getInsertion());
         if (effect == null || effect == BttvModifierSyntax.Modifier.ZERO_SPACE) return source;
+        BttvRenderProbe.marker(); // Did the marker survive the font pipeline?
+        if (!source.getClass().getName().equals("xeed.mc.streamotes.EmoticonGlyph"))
+            return source;
+        BttvRenderProbe.wrapped();
         return new BttvEffectGlyph(source, effect);
     }
 
@@ -70,6 +73,7 @@ public final class BttvEffectGlyph implements BakedGlyph {
             transform.translate(centerX, centerY, 0f)
                 .scale(xFactor(), yFactor(), 1f)
                 .translate(-centerX, -centerY, 0f);
+            BttvRenderProbe.drawn();
             base.render(transform, consumer, light, noDepth);
         }
 

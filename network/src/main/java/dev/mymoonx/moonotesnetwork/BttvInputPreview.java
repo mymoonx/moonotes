@@ -23,7 +23,7 @@ public final class BttvInputPreview {
     // Recognize standalone BTTV operators even before the next emote is
     // fully typed. This prevents Streamotes from trying to download "w!"
     // as an image and keeps chat autocomplete and the caret aligned.
-    private static final Pattern PREFIX = Pattern.compile("(?<!\\S)([whvz]!)(?=\\s|$)");
+    private static final Pattern PREFIX = Pattern.compile("(?<!\\S)!?([whvz]!)(?=\\s|$)");
     private static final Style ACTIVE_PREFIX = Style.EMPTY.withColor(0x69C8D1);
     private static final Style PENDING_PREFIX = Style.EMPTY.withColor(0x989CA5);
     private record Prefix(int start, int end, boolean active) { }
@@ -55,7 +55,7 @@ public final class BttvInputPreview {
         List<Prefix> prefixes = new ArrayList<>();
         Matcher prefixMatcher = PREFIX.matcher(draft);
         while (prefixMatcher.find() && prefixes.size() < 32) {
-            int start = prefixMatcher.start(), end = prefixMatcher.end();
+            int start = prefixMatcher.start(1), end = prefixMatcher.end(1);
             boolean active = modifiers.stream().anyMatch(pair ->
                 pair.start() == start && pair.emoteStart() > end);
             prefixes.add(new Prefix(start, end, active));
@@ -71,7 +71,10 @@ public final class BttvInputPreview {
             // A valid modifier is syntax, even when someone also registered
             // an emote named "w!" or "h!".
             boolean isModifier = prefixes.stream().anyMatch(prefix ->
-                prefix.start() == wordStart && prefix.end() == wordEnd);
+                (prefix.start() == wordStart && prefix.end() == wordEnd)
+                || (wordStart >= 0 && wordStart < draft.length()
+                    && draft.charAt(wordStart) == '!'
+                    && prefix.start() == wordStart + 1 && prefix.end() == wordEnd));
             if (isModifier) continue;
 
             BttvModifierSyntax.Modifier effect = null;

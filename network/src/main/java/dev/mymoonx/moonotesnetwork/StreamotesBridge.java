@@ -107,13 +107,33 @@ public final class StreamotesBridge {
                 + (h.problem().isEmpty() ? "" : "\nСостояние: " + h.problem());
     }
 
-    /** Resolve only names actually registered with the original Streamotes. */
+    private static volatile Method directEmoteLookup;
+    private static volatile long nextEmoteLookupAttempt;
+
+    /**
+     * Ask Streamotes itself, not the optional Network registration adapter.
+     * The latter may not be initialised even though Streamotes already renders
+     * native emotes, and previously caused !WW to stay plain text.
+     */
     public static boolean registeredEmoteName(String name) {
         if (name == null || name.isBlank() || name.length() > 80) return false;
-        Api current = api;
-        if (current == null) return false;
-        try { return current.find(name) != null; }
-        catch (ReflectiveOperationException | RuntimeException ignored) { return false; }
+        Method lookup = directEmoteLookup;
+        if (lookup == null) {
+            long now = System.currentTimeMillis();
+            if (now < nextEmoteLookupAttempt) return false;
+            try {
+                lookup = Class.forName("xeed.mc.streamotes.emoticon.EmoticonRegistry")
+                    .getMethod("fromName", String.class);
+                directEmoteLookup = lookup;
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                nextEmoteLookupAttempt = now + 5_000L;
+                return false;
+            }
+        }
+        try { return lookup.invoke(null, name) != null; }
+        catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
+            return false;
+        }
     }
 
     /** Honors Streamotes' existing colon setting without changing its configuration. */
